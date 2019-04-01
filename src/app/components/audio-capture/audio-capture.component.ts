@@ -15,12 +15,10 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   lineData: number[] = [];
   labelData: string[] = [];
   chartOptions: ChartOptions;
-
+  bph = 3600;
 
   private periodicUpdate: Subscription;
-
   private startTimeMs: number;
-  private frameTimeSpanMs = (60 / 60) * 1000;
 
   constructor(private audioCaptureService: AudioCaptureService,
     private signalProcessingService: SignalProcessingService) { }
@@ -34,6 +32,9 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     this.audioCaptureService.stop();
   }
 
+  private get frameTimeSpanMs(): number {
+    return (this.bph / 60 / 60) * 1000;
+  }
 
   private startUpdateTimer(): void {
     this.periodicUpdate = timer(1000, 100).subscribe(() => {
