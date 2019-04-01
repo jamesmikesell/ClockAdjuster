@@ -48,7 +48,7 @@ export class AudioCaptureService {
   }
 
   configureStream(stream: MediaStream): void {
-    let bufferSize = 16384 / 2;
+    let bufferSize = 0; //16384 / 2;
     let sampleQueueMs = 3000;
     this.sampleQueue = new SampleQueue(Math.round(sampleQueueMs / 1000 * this.audioContext.sampleRate));
 

@@ -20,6 +20,8 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   private periodicUpdate: Subscription;
   private startTimeMs: number;
 
+  // private startDrift = Date.now() - window.performance.now();
+
   constructor(private audioCaptureService: AudioCaptureService,
     private signalProcessingService: SignalProcessingService) { }
 
@@ -39,6 +41,8 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   private startUpdateTimer(): void {
     this.periodicUpdate = timer(1000, 100).subscribe(() => {
       this.fillLabelData();
+
+      // console.log((Date.now() - window.performance.now()) - this.startDrift);
     });
   }
 
