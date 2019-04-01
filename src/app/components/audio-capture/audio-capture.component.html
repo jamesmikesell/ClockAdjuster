@@ -1,0 +1,9 @@
+<button (click)="start()">Start</button>
+<button (click)="ngOnDestroy()">Stop</button>
+<input type="number" step="1" [(ngModel)]="dbCutoff">
+
+
+<br>
+<div style="display: block;">
+  <canvas baseChart width="400" height="400" [data]="lineData" [labels]="labelData" [chartType]="'line'" [options]="chartOptions"></canvas>
+</div>
