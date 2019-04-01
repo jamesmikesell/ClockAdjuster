@@ -63,7 +63,10 @@ export class AudioCaptureService {
   private audioProcess(event: AudioProcessingEvent): void {
     let buf = event.inputBuffer.getChannelData(0);
 
-    let timeEnd = (buf.length / (event.inputBuffer.sampleRate / 1000)) + event.timeStamp;
+    // Using Date.now() until chrome bug around performance time drift has been corrected
+    // https://crbug.com/948384
+    // let timeEnd = (buf.length / (event.inputBuffer.sampleRate / 1000)) + event.timeStamp;
+    let timeEnd = (buf.length / (event.inputBuffer.sampleRate / 1000)) + Date.now();
     this.sampleQueue.add(timeEnd, buf);
 
     // let avg = this.sampleQueue.getRms();
