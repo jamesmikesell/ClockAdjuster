@@ -93,13 +93,13 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   private fillLabelData(): void {
 
     let sampleRateMs = this.audioCaptureService.getSampleRate() / 1000;
-    let averageRms = this.audioCaptureService.sampleQueue.getRms();
+    // let averageRms = this.audioCaptureService.sampleQueue.getRms();
     let timeAndSamples = this.audioCaptureService.sampleQueue.getData();
     let dataEndTime = timeAndSamples[0];
     let samples = timeAndSamples[1];
 
     if (!this.startTimeMs) {
-      let firstPeakIndex = this.signalProcessingService.getFirstPeakStartIndex(samples, averageRms, this.dbCutoff);
+      let firstPeakIndex = this.signalProcessingService.getMaxPeakIndex(samples);
       if (firstPeakIndex !== undefined) {
         let firstPeakStartTime = dataEndTime - ((samples.length - firstPeakIndex) / sampleRateMs);
         // Set the `startTime` so that the fist peak is in the middle of the y-axis
@@ -137,7 +137,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
 
       let frameSamples = samples.slice(frameStartIndex, frameEndIndex);
-      let peakStartIndex = this.signalProcessingService.getFirstPeakStartIndex(frameSamples, averageRms, this.dbCutoff);
+      let peakStartIndex = this.signalProcessingService.getMaxPeakIndex(frameSamples);
 
       this.lineData.push(peakStartIndex);
     }
