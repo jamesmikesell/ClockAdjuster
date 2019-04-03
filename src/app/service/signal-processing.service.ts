@@ -8,7 +8,6 @@ export class SignalProcessingService {
   constructor() { }
 
   getFirstPeakStartIndex(sample: Float32Array, avg: number, dbCutoff: number): number {
-
     let bufferLength = sample.length;
 
     let deviation: number;
@@ -24,4 +23,23 @@ export class SignalProcessingService {
 
     return undefined;
   }
+
+  getMaxPeakIndex(sample: Float32Array): number {
+    let bufferLength = sample.length;
+
+    let value: number;
+    let startOfPeak: number;
+    let maxValue = 0;
+    let maxIndex = 0;
+    for (let i = 0; i < bufferLength && !startOfPeak; i++) {
+      value = Math.abs(sample[i]);
+      if (value > maxValue) {
+        maxIndex = i;
+        maxValue = value;
+      }
+    }
+
+    return maxIndex;
+  }
+
 }

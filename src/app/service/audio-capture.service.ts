@@ -9,6 +9,7 @@ export class AudioCaptureService {
   private audioContext: AudioContext;
   private processor: ScriptProcessorNode;
   private mediaStreamSource: MediaStreamAudioSourceNode;
+  private bufferCount = 0;
 
   sampleQueue = new SampleQueue(1);
 
@@ -63,10 +64,14 @@ export class AudioCaptureService {
   private audioProcess(event: AudioProcessingEvent): void {
     let buf = event.inputBuffer.getChannelData(0);
 
+    this.bufferCount++;
+    let calcTimeMs = 1000 * (this.bufferCount * event.inputBuffer.length) / event.inputBuffer.sampleRate;
+
     // Using Date.now() until chrome bug around performance time drift has been corrected
     // https://crbug.com/948384
     // let timeEnd = (buf.length / (event.inputBuffer.sampleRate / 1000)) + event.timeStamp;
-    let timeEnd = (buf.length / (event.inputBuffer.sampleRate / 1000)) + Date.now();
+    // let timeEnd = (buf.length / (event.inputBuffer.sampleRate / 1000)) + Date.now();
+    let timeEnd = calcTimeMs;
     this.sampleQueue.add(timeEnd, buf);
 
     // let avg = this.sampleQueue.getRms();
