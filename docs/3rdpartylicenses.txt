@@ -389,11 +389,11 @@ MIT
 @angular/router
 MIT
 
-@angular/forms
-MIT
-
 ng2-charts
 ISC
+
+@angular/forms
+MIT
 
 zone.js
 MIT

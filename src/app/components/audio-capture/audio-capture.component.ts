@@ -35,7 +35,10 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   }
 
   private get frameTimeSpanMs(): number {
-    return (this.bph / 60 / 60) * 1000;
+    let bpm = this.bph / 60;
+    let bps = bpm / 60;
+    let periodSeconds = 1 / bps;
+    return periodSeconds * 1000;
   }
 
   private startUpdateTimer(): void {
@@ -51,9 +54,12 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   }
 
   start(): void {
-    this.audioCaptureService.start();
-    this.startUpdateTimer();
-    this.configureChart(this.audioCaptureService.getSampleRate());
+    this.audioCaptureService
+      .start()
+      .then(() => {
+        this.startUpdateTimer();
+        this.configureChart(this.audioCaptureService.getSampleRate());
+      });
   }
 
   private configureChart(chartYMax: number): void {
@@ -97,6 +103,9 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     let timeAndSamples = this.audioCaptureService.sampleQueue.getData();
     let dataEndTime = timeAndSamples[0];
     let samples = timeAndSamples[1];
+
+    if (samples.length < 1000)
+      return;
 
     if (!this.startTimeMs) {
       let firstPeakIndex = this.signalProcessingService.getMaxPeakIndex(samples);
