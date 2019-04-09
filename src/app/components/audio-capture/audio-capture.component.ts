@@ -170,7 +170,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     if (missingFrames)
       console.log("adding missing frames " + missingFrames);
     for (let i = 0; i < missingFrames; i++)
-      this.lineData.push();
+      this.lineData.push(undefined);
 
 
 
