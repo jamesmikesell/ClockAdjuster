@@ -8,6 +8,11 @@ export class SampleQueue {
         this.buffers = new Float32Array(maxValues);
     }
 
+    clear(): void {
+        this.full = false;
+        this.currentIndex = 0;
+    }
+
     add(endTime: number, buffer: Float32Array): void {
         this.endTime = endTime;
 
