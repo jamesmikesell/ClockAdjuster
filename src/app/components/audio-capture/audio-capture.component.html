@@ -1,11 +1,26 @@
 <button (click)="start()">Start</button>
-<button (click)="ngOnDestroy()">Stop</button>
-Sensitivity <input type="number" step="1" [(ngModel)]="dbCutoff">
+<button (click)="stop()">Stop</button>
+<button (click)="reset()">Reset</button>
 BPH<input type="number" step="1" [(ngModel)]="bph">
+Filtered Frequency <input type="number" step="1" [ngModel]="audioCaptureService.getFrequency()"
+  (ngModelChange)="audioCaptureService.setFrequency($event)" min="1" max="22049">
+Filter Strength <input type="range" min="0" max="400" [ngModel]="audioCaptureService.getBandWidth()"
+  (ngModelChange)="audioCaptureService.setBandWidth($event)">
+<br><label><input type="checkbox" [(ngModel)]="showSpectrogram"> Show Spectrogram</label>
 
+<br>
+Running Time: <span *ngIf="runningTime">{{runningTime}}</span>
+
+<div *ngIf="showSpectrogram">
+  <br>
+  <app-spectrogram></app-spectrogram>
+</div>
 
 <br>
 <div *ngIf="chartOptions" style="display: block;">
   <canvas baseChart width="400" height="400" [data]="lineData" [labels]="labelData" [chartType]="'line'"
     [options]="chartOptions"></canvas>
 </div>
+
+
+<br> v9

@@ -11,18 +11,17 @@ import { SignalProcessingService } from '../../service/signal-processing.service
 })
 export class AudioCaptureComponent implements OnInit, OnDestroy {
 
-  dbCutoff: number = 9;
   lineData: number[] = [];
   labelData: string[] = [];
   chartOptions: ChartOptions;
   bph = 3600;
+  showSpectrogram = false;
+  runningTime: string;
 
   private periodicUpdate: Subscription;
-  private startTimeMs: number;
+  private firstPeakTimeMs: number;
 
-  // private startDrift = Date.now() - window.performance.now();
-
-  constructor(private audioCaptureService: AudioCaptureService,
+  constructor(public audioCaptureService: AudioCaptureService,
     private signalProcessingService: SignalProcessingService) { }
 
   ngOnInit(): void { }
@@ -44,22 +43,64 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   private startUpdateTimer(): void {
     this.periodicUpdate = timer(1000, 100).subscribe(() => {
       this.fillLabelData();
-
-      // console.log((Date.now() - window.performance.now()) - this.startDrift);
     });
   }
 
+  private updateRunTime(): void {
+    if (!this.periodicUpdate.closed) {
+      let msUntilNextUpdate: number;
+      if (this.firstPeakTimeMs) {
+        let elapsedMs = Math.round(performance.now() - this.firstPeakTimeMs);
+
+        let hours = Math.floor(elapsedMs / 1000 / 60 / 60);
+        let minutes = Math.floor((elapsedMs / 1000 / 60) % 60);
+        let seconds = Math.round((elapsedMs / 1000) % 60);
+
+        let minutesString = minutes < 10 ? `0${minutes}` : minutes;
+        let secondsString = seconds < 10 ? `0${seconds}` : seconds;
+
+        this.runningTime = `${hours}:${minutesString}:${secondsString}`;
+
+        msUntilNextUpdate = 1000 - (elapsedMs % 1000);
+      } else {
+        msUntilNextUpdate = 1000;
+      }
+
+      setTimeout(() => {
+        this.updateRunTime();
+      }, msUntilNextUpdate);
+    }
+  }
+
   private getLineDataEndTime(): number {
-    return (this.lineData.length * this.frameTimeSpanMs) + this.startTimeMs;
+    return (this.lineData.length * this.frameTimeSpanMs) + this.firstPeakTimeMs;
   }
 
   start(): void {
     this.audioCaptureService
       .start()
       .then(() => {
+        this.audioCaptureService.sampleQueue.clear();
         this.startUpdateTimer();
         this.configureChart(this.audioCaptureService.getSampleRate());
+        this.updateRunTime();
       });
+  }
+
+  stop(): void {
+    if (this.periodicUpdate && !this.periodicUpdate.closed)
+      this.periodicUpdate.unsubscribe();
+
+    // Do one last run just to catch up on anything in cache
+    this.fillLabelData();
+  }
+
+  reset(): void {
+    this.audioCaptureService.sampleQueue.clear();
+    this.lineData = [];
+    this.labelData = [];
+    this.firstPeakTimeMs = 0;
+    this.runningTime = undefined;
   }
 
   private configureChart(chartYMax: number): void {
@@ -97,29 +138,28 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
 
   private fillLabelData(): void {
-
-    let sampleRateMs = this.audioCaptureService.getSampleRate() / 1000;
-    // let averageRms = this.audioCaptureService.sampleQueue.getRms();
+    let sampleRateSeconds = this.audioCaptureService.getSampleRate();
+    let sampleRateMs = sampleRateSeconds / 1000;
     let timeAndSamples = this.audioCaptureService.sampleQueue.getData();
     let dataEndTime = timeAndSamples[0];
     let samples = timeAndSamples[1];
 
-    if (samples.length < 1000)
+    if (samples.length < sampleRateSeconds * 1.5)
       return;
 
-    if (!this.startTimeMs) {
+    if (!this.firstPeakTimeMs) {
       let firstPeakIndex = this.signalProcessingService.getMaxPeakIndex(samples);
       if (firstPeakIndex !== undefined) {
         let firstPeakStartTime = dataEndTime - ((samples.length - firstPeakIndex) / sampleRateMs);
         // Set the `startTime` so that the fist peak is in the middle of the y-axis
-        let chartMidpoint = 25000 / 44100;
-        this.startTimeMs = firstPeakStartTime - (this.frameTimeSpanMs * chartMidpoint);
+        let chartMidpoint = 25000 / sampleRateSeconds;
+        this.firstPeakTimeMs = firstPeakStartTime - (this.frameTimeSpanMs * chartMidpoint);
         this.lineData.push(sampleRateMs * 1000 * chartMidpoint);
       }
     }
 
 
-    if (!this.startTimeMs)
+    if (!this.firstPeakTimeMs)
       return;
 
 
@@ -153,5 +193,4 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
     this.labelData.length = this.lineData.length;
   }
-
 }

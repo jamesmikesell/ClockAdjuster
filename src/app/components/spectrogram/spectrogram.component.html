@@ -1,0 +1,5 @@
+<label><input type="checkbox" [(ngModel)]="graphIsLog">Logarithmic Graph</label> <br>
+
+<canvas #canvas width="400" height="400" (pointerdown)="dragging=true; mouseMove($event)"
+  (pointermove)="mouseMove($event)" (pointerup)="dragging=false" (pointerleave)="dragging=false"
+  style="touch-action: none"></canvas>

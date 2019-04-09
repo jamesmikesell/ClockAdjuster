@@ -9,11 +9,44 @@ export class AudioCaptureService {
   private audioContext: AudioContext;
   private processor: ScriptProcessorNode;
   private mediaStreamSource: MediaStreamAudioSourceNode;
+  private analyser: AnalyserNode;
+  private filterBandPass: BiquadFilterNode;
 
   sampleQueue = new SampleQueue(1);
 
   constructor() { }
 
+  setFrequency(frequency: number): void {
+    if (!this.filterBandPass)
+      return;
+
+    let maxFrequency = this.audioContext.sampleRate / 2;
+    if (frequency === undefined || frequency === null || frequency >= maxFrequency || frequency <= 0)
+      return;
+
+    this.filterBandPass.frequency.value = frequency;
+  }
+
+  getFrequency(): number {
+    if (!this.filterBandPass)
+      return undefined;
+
+    return this.filterBandPass.frequency.value;
+  }
+
+  setBandWidth(bandwidth: number): void {
+    if (!this.filterBandPass)
+      return;
+
+    this.filterBandPass.Q.value = bandwidth;
+  }
+
+  getBandWidth(): number {
+    if (!this.filterBandPass)
+      return 0;
+
+    return this.filterBandPass.Q.value;
+  }
 
   start(): Promise<void> {
     if (!this.audioContext) {
@@ -21,13 +54,25 @@ export class AudioCaptureService {
       this.audioContext = new AudioContext();
 
       let config: MediaStreamConstraints = {
-        "audio": {},
+        "audio": {
+          echoCancellation: false
+        },
       };
 
       return navigator.mediaDevices.getUserMedia(config).then(stream => this.configureStream(stream));
     } else {
       return Promise.resolve();
     }
+  }
+
+  getFrequencyData(): Uint8Array {
+    if (!this.analyser)
+      return new Uint8Array();
+
+    let freq = new Uint8Array(this.analyser.frequencyBinCount);
+    this.analyser.getByteFrequencyData(freq);
+
+    return freq;
   }
 
   stop(): void {
@@ -47,16 +92,28 @@ export class AudioCaptureService {
   }
 
   configureStream(stream: MediaStream): void {
-    let bufferSize = 0; //16384 / 2;
     let sampleQueueMs = 3000;
     this.sampleQueue = new SampleQueue(Math.round(sampleQueueMs / 1000 * this.audioContext.sampleRate));
 
-    this.processor = this.audioContext.createScriptProcessor(bufferSize);
+    this.filterBandPass = this.audioContext.createBiquadFilter();
+    this.filterBandPass.type = "bandpass";
+    this.filterBandPass.frequency.value = 1;
+    this.filterBandPass.Q.value = 0;
+
+    this.processor = this.audioContext.createScriptProcessor(Math.pow(2, 14));
     this.processor.onaudioprocess = (event) => this.audioProcess(event);
+    this.filterBandPass.connect(this.processor);
     this.processor.connect(this.audioContext.destination);
 
+    this.analyser = this.audioContext.createAnalyser();
+    this.analyser.smoothingTimeConstant = 0;
+    this.analyser.fftSize = 2048;
+
+    this.filterBandPass.connect(this.analyser);
+
+
     this.mediaStreamSource = this.audioContext.createMediaStreamSource(stream);
-    this.mediaStreamSource.connect(this.processor);
+    this.mediaStreamSource.connect(this.filterBandPass);
   }
 
   private audioProcess(event: AudioProcessingEvent): void {
