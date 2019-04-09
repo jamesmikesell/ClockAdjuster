@@ -6,11 +6,13 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { AudioCaptureComponent } from './components/audio-capture/audio-capture.component';
 import { ChartsModule } from 'ng2-charts';
+import { SpectrogramComponent } from './components/spectrogram/spectrogram.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    AudioCaptureComponent
+    AudioCaptureComponent,
+    SpectrogramComponent
   ],
   imports: [
     BrowserModule,
