@@ -14,12 +14,16 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   lineData: number[] = [];
   labelData: string[] = [];
   chartOptions: ChartOptions;
-  bph = 3600;
   showSpectrogram = false;
   runningTime: string;
 
   private periodicUpdate: Subscription;
   private firstPeakTimeMs: number;
+  private bph = 3600;
+  private tickTimes: number[] = [];
+  private frames: number[] = [];
+  private scrollValue: number = 1000000;
+
 
   constructor(public audioCaptureService: AudioCaptureService,
     private signalProcessingService: SignalProcessingService) { }
@@ -33,7 +37,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     this.audioCaptureService.stop();
   }
 
-  private get frameTimeSpanMs(): number {
+  private getFrameTimeSpanMs(): number {
     let bpm = this.bph / 60;
     let bps = bpm / 60;
     let periodSeconds = 1 / bps;
@@ -72,22 +76,18 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     }
   }
 
-  private getLineDataEndTime(): number {
-    return (this.lineData.length * this.frameTimeSpanMs) + this.firstPeakTimeMs;
-  }
-
   start(): void {
     this.audioCaptureService
       .start()
       .then(() => {
         this.audioCaptureService.sampleQueue.clear();
         this.startUpdateTimer();
-        this.configureChart(this.audioCaptureService.getSampleRate());
+        this.configureChart();
         this.updateRunTime();
       });
   }
 
-  stop(): void {
+  pause(): void {
     if (this.periodicUpdate && !this.periodicUpdate.closed)
       this.periodicUpdate.unsubscribe();
 
@@ -97,13 +97,26 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
   reset(): void {
     this.audioCaptureService.sampleQueue.clear();
-    this.lineData = [];
     this.labelData = [];
+    this.lineData = [];
+    this.tickTimes = [];
     this.firstPeakTimeMs = 0;
     this.runningTime = undefined;
+    this.configureChart();
   }
 
-  private configureChart(chartYMax: number): void {
+  getBph(): number {
+    return this.bph;
+  }
+
+  setBph(bph: number): void {
+    this.bph = bph;
+    this.configureChart();
+  }
+
+  private configureChart(): void {
+    let chartYMax = this.getFrameTimeSpanMs();
+
     this.chartOptions = {
       responsive: true,
       maintainAspectRatio: false,
@@ -118,7 +131,9 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
         }
       },
       animation: {
-        duration: 0
+        duration: 0,
+        // onComplete: () => { console.log("asdf"); }
+
       },
       hover: {
         animationDuration: 0
@@ -128,16 +143,27 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
       scales: {
         yAxes: [{
           ticks: {
-            beginAtZero: true,
-            max: chartYMax
+            max: chartYMax / 2,
+            min: -chartYMax / 2
           }
         }]
       }
     };
   }
 
-
   private fillLabelData(): void {
+    this.findTickTimes();
+
+    if (!this.tickTimes.length)
+      return;
+
+    this.frames = this.splitTickTimesIntoFrames();
+
+    this.updateDisplayedFrames();
+  }
+
+
+  private findTickTimes(): void {
     let sampleRateSeconds = this.audioCaptureService.getSampleRate();
     let sampleRateMs = sampleRateSeconds / 1000;
     let timeAndSamples = this.audioCaptureService.sampleQueue.getData();
@@ -147,50 +173,116 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     if (samples.length < sampleRateSeconds * 1.5)
       return;
 
-    if (!this.firstPeakTimeMs) {
+    if (!this.tickTimes.length) {
       let firstPeakIndex = this.signalProcessingService.getMaxPeakIndex(samples);
       if (firstPeakIndex !== undefined) {
         let firstPeakStartTime = dataEndTime - ((samples.length - firstPeakIndex) / sampleRateMs);
-        // Set the `startTime` so that the fist peak is in the middle of the y-axis
-        let chartMidpoint = 25000 / sampleRateSeconds;
-        this.firstPeakTimeMs = firstPeakStartTime - (this.frameTimeSpanMs * chartMidpoint);
-        this.lineData.push(sampleRateMs * 1000 * chartMidpoint);
+        this.firstPeakTimeMs = firstPeakStartTime;
+        this.tickTimes.push(firstPeakStartTime);
+      } else {
+        return;
       }
     }
 
-
-    if (!this.firstPeakTimeMs)
-      return;
-
-
-    let dataStartTime = dataEndTime - (samples.length / sampleRateMs);
-    //Fill in missing data
-    let missingFrames = Math.ceil((dataStartTime - this.getLineDataEndTime()) / this.frameTimeSpanMs);
-    missingFrames = missingFrames < 0 ? 0 : missingFrames;
-    if (missingFrames)
-      console.log("adding missing frames " + missingFrames);
-    for (let i = 0; i < missingFrames; i++)
-      this.lineData.push(undefined);
-
-
-
-    //Chunk data in whole frames
+    //Find peak in each frame
     while (true) {
-      let frameStartTime = this.getLineDataEndTime();
-      let frameEndTime = frameStartTime + this.frameTimeSpanMs;
+      let lineDataEndTime = this.tickTimes[this.tickTimes.length - 1];
+      let dataStartTime = dataEndTime - (samples.length / sampleRateMs);
+
+      let minStart = Math.max(lineDataEndTime + (1 / sampleRateMs), dataStartTime);
+      let frameStartTime = Math.ceil(minStart / this.getFrameTimeSpanMs()) * this.getFrameTimeSpanMs();
+      let frameEndTime = frameStartTime + this.getFrameTimeSpanMs();
       if (frameEndTime > dataEndTime)
         break;
 
       let frameStartIndex = Math.round(samples.length - ((dataEndTime - frameStartTime) * sampleRateMs));
-      let frameEndIndex = Math.round(frameStartIndex + (this.frameTimeSpanMs * sampleRateMs));
-
+      let frameEndIndex = Math.round(frameStartIndex + (this.getFrameTimeSpanMs() * sampleRateMs));
 
       let frameSamples = samples.slice(frameStartIndex, frameEndIndex);
       let peakStartIndex = this.signalProcessingService.getMaxPeakIndex(frameSamples);
 
-      this.lineData.push(peakStartIndex);
+      let peakMsIntoFrame = peakStartIndex / sampleRateMs;
+      let peakTime = peakMsIntoFrame + frameStartTime;
+      this.tickTimes.push(peakTime);
+    }
+  }
+
+  private splitTickTimesIntoFrames(): number[] {
+    if (this.tickTimes.length) {
+      let frameTimeSpan = this.getFrameTimeSpanMs();
+      let firstTickTime = this.tickTimes[0];
+      let lastTickTime = this.tickTimes[this.tickTimes.length - 1];
+
+      let timeSpan = lastTickTime - firstTickTime;
+      let frameCount = Math.floor(timeSpan / frameTimeSpan) + 1;
+
+      let frames = new Array<number>(frameCount);
+      for (let i = 0; i < frames.length; i++)
+        frames[i] = undefined;
+
+      for (let i = 0; i < this.tickTimes.length; i++) {
+        const tickTime = this.tickTimes[i];
+        let tickTimeSinceFirstTick = tickTime - firstTickTime;
+        let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan);
+
+        let frameTime = frameIndex * frameTimeSpan;
+
+        frames[frameIndex] = tickTimeSinceFirstTick - frameTime;
+      }
+
+      return frames;
+    } else {
+      return undefined;
+    }
+  }
+
+  get scroll(): number { return this.scrollValue; }
+  set scroll(value: number) {
+    this.scrollValue = value;
+    this.updateDisplayedFrames();
+  }
+
+  private updateDisplayedFrames(): void {
+    let chartMargins = 50;
+    let maxPointsPerPixel = 150 / 1000;
+    let windowSize = (window.innerWidth - chartMargins) * maxPointsPerPixel;
+    let scrollMax = 1000000;
+
+    let indexStart: number;
+    let indexEnd: number;
+    if (this.frames.length > windowSize) {
+      indexStart = Math.round((this.scrollValue / scrollMax) * (this.frames.length - windowSize));
+      indexEnd = indexStart + windowSize - 1;
+    } else {
+      indexStart = 0;
+      indexEnd = this.frames.length - 1;
     }
 
-    this.labelData.length = this.lineData.length;
+    let framesToDisplay = this.frames.slice(indexStart, indexEnd);
+
+    this.syncFramesWithGraph(framesToDisplay, true, indexStart);
   }
+
+  private syncFramesWithGraph(frames: number[], clear = false, windowStartIndex = 0): void {
+    // Most recent graph data doesn't equal it's counter part in frame data (likely change in BPH);
+    // clear and start over
+    if (this.lineData.length > frames.length || clear) {
+      this.lineData = [];
+      this.labelData = [];
+    }
+
+    // We're syncing arrays as just resetting the array each time has performance implications when the graph re-renders
+    for (let i = 0; i < frames.length; i++) {
+      let seconds = Math.round((i + windowStartIndex) * this.getFrameTimeSpanMs() / 10) / 100;
+
+      if (i < this.lineData.length) {
+        this.labelData[i] = seconds.toString();
+        this.lineData[i] = frames[i];
+      } else {
+        this.labelData.push(seconds.toString());
+        this.lineData.push(frames[i]);
+      }
+    }
+  }
+
 }
