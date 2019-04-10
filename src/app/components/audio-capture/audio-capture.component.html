@@ -1,7 +1,7 @@
 <button (click)="start()">Start</button>
-<button (click)="stop()">Stop</button>
+<button (click)="pause()">Pause</button>
 <button (click)="reset()">Reset</button>
-BPH<input type="number" step="1" [(ngModel)]="bph">
+BPH<input type="number" step="1" [ngModel]="getBph()" (ngModelChange)="setBph($event)">
 Filtered Frequency <input type="number" step="1" [ngModel]="audioCaptureService.getFrequency()"
   (ngModelChange)="audioCaptureService.setFrequency($event)" min="1" max="22049">
 Filter Strength <input type="range" min="0" max="400" [ngModel]="audioCaptureService.getBandWidth()"
@@ -16,10 +16,11 @@ Running Time: <span *ngIf="runningTime">{{runningTime}}</span>
 </div>
 
 <br>
-<div *ngIf="chartOptions" style="display: block;">
+<div *ngIf="chartOptions" style="display: block;" class="chart-container">
   <canvas baseChart width="400" height="400" [data]="lineData" [labels]="labelData" [chartType]="'line'"
     [options]="chartOptions"></canvas>
+  <input type="range" min="0" max="1000000" [(ngModel)]="scroll" id="scroller">
 </div>
 
 
-<br> v10
+<br> v11

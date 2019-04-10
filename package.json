@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "startProd": "ng serve --prod",
     "build": "rm -rf docs && rm -rf dist && ng build --prod --base-href \"/ClockAdjuster/\" && mv dist/ClockAdjuster docs ",
     "test": "ng test",
     "lint": "ng lint",
