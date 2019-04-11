@@ -3,6 +3,8 @@ import { timer, Subscription } from 'rxjs';
 import { ChartOptions } from 'chart.js';
 import { AudioCaptureService } from '../../service/audio-capture.service';
 import { SignalProcessingService } from '../../service/signal-processing.service';
+import { environment } from '../../../environments/environment';
+import { NoSleepService } from '../../service/no-sleep.service';
 
 @Component({
   selector: 'app-audio-capture',
@@ -26,6 +28,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
 
   constructor(public audioCaptureService: AudioCaptureService,
+    private noSleep: NoSleepService,
     private signalProcessingService: SignalProcessingService) { }
 
   ngOnInit(): void { }
@@ -35,6 +38,10 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
       this.periodicUpdate.unsubscribe();
 
     this.audioCaptureService.stop();
+  }
+
+  getVersion(): string {
+    return environment.version;
   }
 
   private getFrameTimeSpanMs(): number {
@@ -85,6 +92,8 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
         this.configureChart();
         this.updateRunTime();
       });
+
+      this.noSleep.start();
   }
 
   pause(): void {
@@ -132,8 +141,6 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
       },
       animation: {
         duration: 0,
-        // onComplete: () => { console.log("asdf"); }
-
       },
       hover: {
         animationDuration: 0
