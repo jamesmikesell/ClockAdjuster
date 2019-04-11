@@ -21,13 +21,15 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
   private clickY = 0;
   private clickTime: number;
   private frequencyBinCount: number;
-  
- graphIsLog = false;
+
+  private _graphIsLog = false;
 
 
   constructor(private audioCaptureService: AudioCaptureService) { }
 
   ngOnInit(): void {
+    this.configFFTSize();
+
     let canvas = this.canvasRef.nativeElement as HTMLCanvasElement;
     this.canvasCtx = canvas.getContext("2d");
 
@@ -67,16 +69,25 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
         frequency = (y / height) * maxFrequency;
       }
 
-      // let percent = y / height;
-      // let binIndex = Math.pow(this.frequencyBinCount, percent) - 1;
-      // let maxFrequency = this.audioCaptureService.getSampleRate() / 2;
-      // let frequency = maxFrequency * (binIndex / (this.frequencyBinCount - 1));
-
-
       this.audioCaptureService.setFrequency(Math.round(frequency));
     }
   }
 
+  get graphIsLog(): boolean {
+    return this._graphIsLog;
+  }
+
+  set graphIsLog(value: boolean) {
+    this._graphIsLog = value;
+    this.configFFTSize();
+  }
+
+  private configFFTSize(): void {
+    if (this._graphIsLog)
+      this.audioCaptureService.setFFTBinCount(Math.pow(2, 14));
+    else
+      this.audioCaptureService.setFFTBinCount(Math.pow(2, 9));
+  }
 
   private render(): void {
     let width = this.canvasCtx.canvas.width;
