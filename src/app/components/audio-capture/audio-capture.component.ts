@@ -23,8 +23,9 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   private firstPeakTimeMs: number;
   private bph = 3600;
   private tickTimes: number[] = [];
-  private frames: number[] = [];
-  private scrollValue: number = 1000000;
+  private readonly scrollMax = 1000000;
+  private scrollValue: number = this.scrollMax;
+  private scrolledToStartFrame: number;
 
 
   constructor(public audioCaptureService: AudioCaptureService,
@@ -93,7 +94,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
         this.updateRunTime();
       });
 
-      this.noSleep.start();
+    this.noSleep.start();
   }
 
   pause(): void {
@@ -164,8 +165,6 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     if (!this.tickTimes.length)
       return;
 
-    this.frames = this.splitTickTimesIntoFrames();
-
     this.updateDisplayedFrames();
   }
 
@@ -214,13 +213,66 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     }
   }
 
-  private splitTickTimesIntoFrames(): number[] {
+  private getScrollPercent(): number {
+    return (this.scrollValue / this.scrollMax);
+  }
+
+  private getMaxFramesToDisplay(): number {
+    let chartMargins = 50;
+    let maxPointsPerPixel = 150 / 1000;
+    return Math.round((window.innerWidth - chartMargins) * maxPointsPerPixel);
+  }
+
+  private updateDisplayedFrames(): void {
+    let maxFramesToDisplay = this.getMaxFramesToDisplay();
+
+    let frameTimeSpan = this.getFrameTimeSpanMs();
+    let firstTickTime = this.tickTimes[0];
+    let lastTickTime = this.tickTimes[this.tickTimes.length - 1];
+    let tickTimeSpan = lastTickTime - firstTickTime;
+    let framesInTimeSpan = Math.round(tickTimeSpan / frameTimeSpan);
+
+    let windowStartFrameIndex: number;
+    let windowStartTime: number;
+    let windowEndTime: number;
+    if (framesInTimeSpan <= maxFramesToDisplay) {
+      windowStartTime = firstTickTime;
+      windowEndTime = lastTickTime;
+      windowStartFrameIndex = 0;
+    } else {
+      let scrollPercent = this.getScrollPercent();
+      let firstFrameIndex: number;
+      if (this.scrolledToStartFrame !== undefined) {
+        firstFrameIndex = this.scrolledToStartFrame;
+      } else {
+        firstFrameIndex = Math.round(scrollPercent * (framesInTimeSpan - maxFramesToDisplay));
+      }
+
+
+      if (scrollPercent !== 1) {
+        this.scrolledToStartFrame = firstFrameIndex;
+        // Move scroll bar so that it's location accurately reflects the displayed frame as time progresses / mores ticks get added
+        this.scrollValue = Math.round(this.scrollMax * (firstFrameIndex / (framesInTimeSpan - maxFramesToDisplay)));
+      }
+
+      let lastFrameIndex = firstFrameIndex + maxFramesToDisplay;
+
+      windowStartTime = (firstFrameIndex * frameTimeSpan) + firstTickTime;
+      windowEndTime = (lastFrameIndex * frameTimeSpan) + firstTickTime;
+      windowStartFrameIndex = firstFrameIndex;
+    }
+
+    let framesToDisplay = this.splitTickTimesIntoFrames(windowStartTime, windowEndTime, windowStartFrameIndex);
+
+    this.syncFramesWithGraph(framesToDisplay, true, windowStartFrameIndex);
+  }
+
+  private splitTickTimesIntoFrames(startTime: number, endTime: number, startingFrameIndex: number): number[] {
     if (this.tickTimes.length) {
       let frameTimeSpan = this.getFrameTimeSpanMs();
       let firstTickTime = this.tickTimes[0];
-      let lastTickTime = this.tickTimes[this.tickTimes.length - 1];
 
-      let timeSpan = lastTickTime - firstTickTime;
+      let timeSpan = endTime - startTime;
       let frameCount = Math.floor(timeSpan / frameTimeSpan) + 1;
 
       let frames = new Array<number>(frameCount);
@@ -229,12 +281,14 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
       for (let i = 0; i < this.tickTimes.length; i++) {
         const tickTime = this.tickTimes[i];
-        let tickTimeSinceFirstTick = tickTime - firstTickTime;
-        let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan);
+        if (tickTime >= startTime && tickTime <= endTime) {
+          let tickTimeSinceFirstTick = tickTime - firstTickTime;
+          let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan) - startingFrameIndex;
 
-        let frameTime = frameIndex * frameTimeSpan;
+          let frameTime = (frameIndex + startingFrameIndex) * frameTimeSpan;
 
-        frames[frameIndex] = tickTimeSinceFirstTick - frameTime;
+          frames[frameIndex] = tickTimeSinceFirstTick - frameTime;
+        }
       }
 
       return frames;
@@ -246,28 +300,8 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   get scroll(): number { return this.scrollValue; }
   set scroll(value: number) {
     this.scrollValue = value;
+    this.scrolledToStartFrame = undefined;
     this.updateDisplayedFrames();
-  }
-
-  private updateDisplayedFrames(): void {
-    let chartMargins = 50;
-    let maxPointsPerPixel = 150 / 1000;
-    let windowSize = (window.innerWidth - chartMargins) * maxPointsPerPixel;
-    let scrollMax = 1000000;
-
-    let indexStart: number;
-    let indexEnd: number;
-    if (this.frames.length > windowSize) {
-      indexStart = Math.round((this.scrollValue / scrollMax) * (this.frames.length - windowSize));
-      indexEnd = indexStart + windowSize - 1;
-    } else {
-      indexStart = 0;
-      indexEnd = this.frames.length - 1;
-    }
-
-    let framesToDisplay = this.frames.slice(indexStart, indexEnd);
-
-    this.syncFramesWithGraph(framesToDisplay, true, indexStart);
   }
 
   private syncFramesWithGraph(frames: number[], clear = false, windowStartIndex = 0): void {
