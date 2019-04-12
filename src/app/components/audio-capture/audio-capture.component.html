@@ -1,26 +1,51 @@
-<button (click)="start()">Start</button>
-<button (click)="pause()">Pause Capture</button>
-<button (click)="reset()">Reset</button>
-BPH<input type="number" step="1" [ngModel]="getBph()" (ngModelChange)="setBph($event)">
-Filtered Frequency <input type="number" step="1" [ngModel]="audioCaptureService.getFrequency()"
-  (ngModelChange)="audioCaptureService.setFrequency($event)" min="1" max="22049">
-Filter Strength <input type="range" min="0" max="400" [ngModel]="audioCaptureService.getBandWidth()"
-  (ngModelChange)="audioCaptureService.setBandWidth($event)">
-<br><label><input type="checkbox" [(ngModel)]="showSpectrogram"> Show Spectrogram</label>
+<button mat-raised-button color="primary" (click)="start()">Start Capture</button>
+<button mat-raised-button (click)="pause()">Pause Capture</button>
+<button mat-raised-button (click)="reset()">Reset</button>
+
+
+<mat-form-field>
+  <mat-label>Beats Per Hour</mat-label>
+  <input matInput type="number" step="1" [ngModel]="getBph()" (ngModelChange)="setBph($event)">
+</mat-form-field>
+<mat-checkbox [(ngModel)]="noSleep.keepAwake">Keep Screen Awake</mat-checkbox> <br>
+
+
+
+<mat-accordion>
+  <mat-expansion-panel #spectrographParent>
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        Filter Audio
+      </mat-panel-title>
+      <mat-panel-description>
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+
+    <mat-form-field>
+      <mat-label>Filtered Frequency</mat-label>
+      <input matInput type="number" step="1" [ngModel]="audioCaptureService.getFrequency()"
+        (ngModelChange)="audioCaptureService.setFrequency($event)" min="1" max="22049">
+    </mat-form-field>
+
+    Filter Strength <mat-slider min="0" max="400" [ngModel]="audioCaptureService.getBandWidth()"
+      (input)="audioCaptureService.setBandWidth($event.value)"></mat-slider>
+    <br>
+
+    <app-spectrogram *ngIf="spectrographParent.expanded"></app-spectrogram>
+  </mat-expansion-panel>
+</mat-accordion>
 
 <br>
 Running Time: <span *ngIf="runningTime">{{runningTime}}</span>
 
-<div *ngIf="showSpectrogram">
-  <app-spectrogram></app-spectrogram>
-</div>
 
 <br>
 <div *ngIf="chartOptions" style="display: block;" class="chart-container">
   <canvas baseChart width="400" height="400" [data]="lineData" [labels]="labelData" [chartType]="'line'"
     [options]="chartOptions"></canvas>
-  <input type="range" min="0" max="1000000" [(ngModel)]="scroll" id="scroller">
+  <mat-slider [min]="0" [max]="1000000" (input)="scroll = $event.value" [ngModel]="scroll" id="scroller"></mat-slider>
 </div>
 
 
-<br> v{{getVersion()}}
+
+<br><br><span class="version-text"> v{{getVersion()}}</span>

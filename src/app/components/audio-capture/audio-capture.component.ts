@@ -16,7 +16,6 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   lineData: number[] = [];
   labelData: string[] = [];
   chartOptions: ChartOptions;
-  showSpectrogram = false;
   runningTime: string;
 
   private periodicUpdate: Subscription;
@@ -29,7 +28,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
 
   constructor(public audioCaptureService: AudioCaptureService,
-    private noSleep: NoSleepService,
+    public noSleep: NoSleepService,
     private signalProcessingService: SignalProcessingService) { }
 
   ngOnInit(): void { }
@@ -93,8 +92,6 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
         this.configureChart();
         this.updateRunTime();
       });
-
-    this.noSleep.start();
   }
 
   pause(): void {
@@ -129,6 +126,9 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
     this.chartOptions = {
       responsive: true,
+      legend: {
+        display: false
+      },
       maintainAspectRatio: false,
       elements: {
         line: {
