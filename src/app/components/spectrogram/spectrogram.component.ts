@@ -28,6 +28,8 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
   constructor(private audioCaptureService: AudioCaptureService) { }
 
   ngOnInit(): void {
+    this.audioCaptureService.start();
+
     this.configFFTSize();
 
     let canvas = this.canvasRef.nativeElement as HTMLCanvasElement;
