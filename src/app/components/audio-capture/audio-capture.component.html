@@ -5,7 +5,7 @@
 
 <mat-form-field>
   <mat-label>Beats Per Hour</mat-label>
-  <input matInput type="number" step="1" [ngModel]="getBph()" (ngModelChange)="setBph($event)">
+  <input matInput type="number" step="1" [(ngModel)]="bph">
 </mat-form-field>
 <mat-checkbox [(ngModel)]="noSleep.keepAwake">Keep Screen Awake</mat-checkbox> <br>
 
@@ -29,6 +29,21 @@
 
     Filter Strength <mat-slider min="0" max="400" [ngModel]="audioCaptureService.getBandWidth()"
       (input)="audioCaptureService.setBandWidth($event.value)"></mat-slider>
+
+    <mat-form-field>
+      <mat-label>Peak Detection Method</mat-label>
+      <mat-select [(value)]="peakTimeService.peakDetectionMethod">
+        <mat-option [value]="PeakDetectionMethod.firstPeak">Time of First Peak Above Average</mat-option>
+        <mat-option [value]="PeakDetectionMethod.maxPeak">Time of Max Peak</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+
+    <mat-form-field *ngIf="peakTimeService.peakDetectionMethod === PeakDetectionMethod.firstPeak">
+      <mat-label>DB Cutoff</mat-label>
+      <input matInput type="number" step="1" [(ngModel)]="peakTimeService.dbCutoff" min="1" max="100">
+    </mat-form-field>
+
     <br>
 
     <app-spectrogram *ngIf="spectrographParent.expanded"></app-spectrogram>
@@ -43,7 +58,7 @@ Running Time: <span *ngIf="runningTime">{{runningTime}}</span>
 <div *ngIf="chartOptions" style="display: block;" class="chart-container">
   <canvas baseChart width="400" height="400" [data]="lineData" [labels]="labelData" [chartType]="'line'"
     [options]="chartOptions"></canvas>
-  <mat-slider [min]="0" [max]="1000000" (input)="scroll = $event.value" [ngModel]="scroll" id="scroller"></mat-slider>
+  <input type="range" [min]="0" [max]="1000000" [(ngModel)]="scroll" id="scroller">
 </div>
 
 

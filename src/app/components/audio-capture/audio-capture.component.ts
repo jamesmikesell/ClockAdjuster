@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { timer, Subscription } from 'rxjs';
 import { ChartOptions } from 'chart.js';
 import { AudioCaptureService } from '../../service/audio-capture.service';
-import { SignalProcessingService } from '../../service/signal-processing.service';
 import { environment } from '../../../environments/environment';
 import { NoSleepService } from '../../service/no-sleep.service';
+import { PeakTimeService, PeakDetectionMethod } from '../../service/peak-time.service';
 
 @Component({
   selector: 'app-audio-capture',
@@ -17,21 +17,26 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   labelData: string[] = [];
   chartOptions: ChartOptions;
   runningTime: string;
+  PeakDetectionMethod = PeakDetectionMethod;
 
   private periodicUpdate: Subscription;
-  private firstPeakTimeMs: number;
-  private bph = 3600;
-  private tickTimes: number[] = [];
+  private _bph = 3600;
   private readonly scrollMax = 1000000;
   private scrollValue: number = this.scrollMax;
-  private scrolledToStartFrame: number;
 
 
   constructor(public audioCaptureService: AudioCaptureService,
     public noSleep: NoSleepService,
-    private signalProcessingService: SignalProcessingService) { }
+    public peakTimeService: PeakTimeService) {
 
-  ngOnInit(): void { }
+  }
+
+  ngOnInit(): void {
+    this.peakTimeService.maxFramesToDisplay = this.getMaxFramesToDisplay();
+    this.peakTimeService.frameTimeSpanMs = this.getFrameTimeSpanMs();
+    this.peakTimeService.scrollPercentChange.subscribe(percent => this.scrollValue = percent * this.scrollMax);
+
+  }
 
   ngOnDestroy(): void {
     if (this.periodicUpdate && !this.periodicUpdate.closed)
@@ -44,24 +49,18 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     return environment.version;
   }
 
-  private getFrameTimeSpanMs(): number {
-    let bpm = this.bph / 60;
-    let bps = bpm / 60;
-    let periodSeconds = 1 / bps;
-    return periodSeconds * 1000;
-  }
-
   private startUpdateTimer(): void {
     this.periodicUpdate = timer(1000, 100).subscribe(() => {
-      this.fillLabelData();
+      this.findAndDisplayTicks();
     });
   }
 
   private updateRunTime(): void {
     if (!this.periodicUpdate.closed) {
       let msUntilNextUpdate: number;
-      if (this.firstPeakTimeMs) {
-        let elapsedMs = Math.round(performance.now() - this.firstPeakTimeMs);
+      let firstTickTime = this.peakTimeService.getFirstTickTime();
+      if (firstTickTime) {
+        let elapsedMs = Math.round(performance.now() - firstTickTime);
 
         let hours = Math.floor(elapsedMs / 1000 / 60 / 60);
         let minutes = Math.floor((elapsedMs / 1000 / 60) % 60);
@@ -99,26 +98,33 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
       this.periodicUpdate.unsubscribe();
 
     // Do one last run just to catch up on anything in cache
-    this.fillLabelData();
+    this.findAndDisplayTicks();
   }
 
   reset(): void {
     this.audioCaptureService.sampleQueue.clear();
     this.labelData = [];
     this.lineData = [];
-    this.tickTimes = [];
-    this.firstPeakTimeMs = 0;
+    this.peakTimeService.clear();
     this.runningTime = undefined;
     this.configureChart();
   }
 
-  getBph(): number {
-    return this.bph;
+  get bph(): number {
+    return this._bph;
   }
 
-  setBph(bph: number): void {
-    this.bph = bph;
+  set bph(bph: number) {
+    this._bph = bph;
     this.configureChart();
+    this.peakTimeService.frameTimeSpanMs = this.getFrameTimeSpanMs();
+  }
+
+  private getFrameTimeSpanMs(): number {
+    let bpm = this._bph / 60;
+    let bps = bpm / 60;
+    let periodSeconds = 1 / bps;
+    return periodSeconds * 1000;
   }
 
   private configureChart(): void {
@@ -159,62 +165,17 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     };
   }
 
-  private fillLabelData(): void {
-    this.findTickTimes();
+  private findAndDisplayTicks(): void {
+    this.peakTimeService.findTickTimes();
 
-    if (!this.tickTimes.length)
-      return;
-
-    this.updateDisplayedFrames();
+    let frames = this.peakTimeService.getFramesToDisplay();
+    if (frames)
+      this.syncFramesWithGraph(frames.frames, frames.startTime);
   }
 
-
-  private findTickTimes(): void {
-    let sampleRateSeconds = this.audioCaptureService.getSampleRate();
-    let sampleRateMs = sampleRateSeconds / 1000;
-    let timeAndSamples = this.audioCaptureService.sampleQueue.getData();
-    let dataEndTime = timeAndSamples[0];
-    let samples = timeAndSamples[1];
-
-    if (samples.length < sampleRateSeconds * 1.5)
-      return;
-
-    if (!this.tickTimes.length) {
-      let firstPeakIndex = this.signalProcessingService.getMaxPeakIndex(samples);
-      if (firstPeakIndex !== undefined) {
-        let firstPeakStartTime = dataEndTime - ((samples.length - firstPeakIndex) / sampleRateMs);
-        this.firstPeakTimeMs = firstPeakStartTime;
-        this.tickTimes.push(firstPeakStartTime);
-      } else {
-        return;
-      }
-    }
-
-    //Find peak in each frame
-    while (true) {
-      let lineDataEndTime = this.tickTimes[this.tickTimes.length - 1];
-      let dataStartTime = dataEndTime - (samples.length / sampleRateMs);
-
-      let minStart = Math.max(lineDataEndTime + (1 / sampleRateMs), dataStartTime);
-      let frameStartTime = Math.ceil(minStart / this.getFrameTimeSpanMs()) * this.getFrameTimeSpanMs();
-      let frameEndTime = frameStartTime + this.getFrameTimeSpanMs();
-      if (frameEndTime > dataEndTime)
-        break;
-
-      let frameStartIndex = Math.round(samples.length - ((dataEndTime - frameStartTime) * sampleRateMs));
-      let frameEndIndex = Math.round(frameStartIndex + (this.getFrameTimeSpanMs() * sampleRateMs));
-
-      let frameSamples = samples.slice(frameStartIndex, frameEndIndex);
-      let peakStartIndex = this.signalProcessingService.getMaxPeakIndex(frameSamples);
-
-      let peakMsIntoFrame = peakStartIndex / sampleRateMs;
-      let peakTime = peakMsIntoFrame + frameStartTime;
-      this.tickTimes.push(peakTime);
-    }
-  }
-
-  private getScrollPercent(): number {
-    return (this.scrollValue / this.scrollMax);
+  @HostListener('window:resize', ['$event'])
+  windowResize(): void {
+    this.peakTimeService.maxFramesToDisplay = this.getMaxFramesToDisplay();
   }
 
   private getMaxFramesToDisplay(): number {
@@ -223,104 +184,35 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     return Math.round((window.innerWidth - chartMargins) * maxPointsPerPixel);
   }
 
-  private updateDisplayedFrames(): void {
-    let maxFramesToDisplay = this.getMaxFramesToDisplay();
-
-    let frameTimeSpan = this.getFrameTimeSpanMs();
-    let firstTickTime = this.tickTimes[0];
-    let lastTickTime = this.tickTimes[this.tickTimes.length - 1];
-    let tickTimeSpan = lastTickTime - firstTickTime;
-    let framesInTimeSpan = Math.round(tickTimeSpan / frameTimeSpan);
-
-    let windowStartFrameIndex: number;
-    let windowStartTime: number;
-    let windowEndTime: number;
-    if (framesInTimeSpan <= maxFramesToDisplay) {
-      windowStartTime = firstTickTime;
-      windowEndTime = lastTickTime;
-      windowStartFrameIndex = 0;
-    } else {
-      let scrollPercent = this.getScrollPercent();
-      let firstFrameIndex: number;
-      if (this.scrolledToStartFrame !== undefined) {
-        firstFrameIndex = this.scrolledToStartFrame;
-      } else {
-        firstFrameIndex = Math.round(scrollPercent * (framesInTimeSpan - maxFramesToDisplay));
-      }
-
-
-      if (scrollPercent !== 1) {
-        this.scrolledToStartFrame = firstFrameIndex;
-        // Move scroll bar so that it's location accurately reflects the displayed frame as time progresses / mores ticks get added
-        this.scrollValue = Math.round(this.scrollMax * (firstFrameIndex / (framesInTimeSpan - maxFramesToDisplay)));
-      }
-
-      let lastFrameIndex = firstFrameIndex + maxFramesToDisplay;
-
-      windowStartTime = (firstFrameIndex * frameTimeSpan) + firstTickTime;
-      windowEndTime = (lastFrameIndex * frameTimeSpan) + firstTickTime;
-      windowStartFrameIndex = firstFrameIndex;
-    }
-
-    let framesToDisplay = this.splitTickTimesIntoFrames(windowStartTime, windowEndTime, windowStartFrameIndex);
-
-    this.syncFramesWithGraph(framesToDisplay, true, windowStartFrameIndex);
-  }
-
-  private splitTickTimesIntoFrames(startTime: number, endTime: number, startingFrameIndex: number): number[] {
-    if (this.tickTimes.length) {
-      let frameTimeSpan = this.getFrameTimeSpanMs();
-      let firstTickTime = this.tickTimes[0];
-
-      let timeSpan = endTime - startTime;
-      let frameCount = Math.floor(timeSpan / frameTimeSpan) + 1;
-
-      let frames = new Array<number>(frameCount);
-      for (let i = 0; i < frames.length; i++)
-        frames[i] = undefined;
-
-      for (let i = 0; i < this.tickTimes.length; i++) {
-        const tickTime = this.tickTimes[i];
-        if (tickTime >= startTime && tickTime <= endTime) {
-          let tickTimeSinceFirstTick = tickTime - firstTickTime;
-          let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan) - startingFrameIndex;
-
-          let frameTime = (frameIndex + startingFrameIndex) * frameTimeSpan;
-
-          frames[frameIndex] = tickTimeSinceFirstTick - frameTime;
-        }
-      }
-
-      return frames;
-    } else {
-      return undefined;
-    }
-  }
-
   get scroll(): number { return this.scrollValue; }
   set scroll(value: number) {
     this.scrollValue = value;
-    this.scrolledToStartFrame = undefined;
-    this.updateDisplayedFrames();
+    this.peakTimeService.scrollPercent = this.scrollValue / this.scrollMax;
+
+    let frames = this.peakTimeService.getFramesToDisplay();
+    if (frames)
+      this.syncFramesWithGraph(frames.frames, frames.startTime);
   }
 
-  private syncFramesWithGraph(frames: number[], clear = false, windowStartIndex = 0): void {
+  private syncFramesWithGraph(frames: number[], windowStartTime: number): void {
     // Most recent graph data doesn't equal it's counter part in frame data (likely change in BPH);
     // clear and start over
-    if (this.lineData.length > frames.length || clear) {
+    if (this.lineData.length > frames.length) {
       this.lineData = [];
       this.labelData = [];
     }
 
     // We're syncing arrays as just resetting the array each time has performance implications when the graph re-renders
     for (let i = 0; i < frames.length; i++) {
-      let seconds = Math.round((i + windowStartIndex) * this.getFrameTimeSpanMs() / 10) / 100;
+      let seconds = (Math.round((windowStartTime + (this.getFrameTimeSpanMs() * i)) / 10) / 100).toString();
 
       if (i < this.lineData.length) {
-        this.labelData[i] = seconds.toString();
-        this.lineData[i] = frames[i];
+        if (this.labelData[i] !== seconds)
+          this.labelData[i] = seconds;
+        if (this.lineData[i] !== frames[i])
+          this.lineData[i] = frames[i];
       } else {
-        this.labelData.push(seconds.toString());
+        this.labelData.push(seconds);
         this.lineData.push(frames[i]);
       }
     }
