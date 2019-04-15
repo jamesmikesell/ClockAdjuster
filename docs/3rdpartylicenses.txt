@@ -480,11 +480,11 @@ MIT
 ng2-charts
 ISC
 
-@angular/material/slider
-
 @angular/material/button
 
 @angular/material/expansion
+
+@angular/material/slider
 
 @angular/material/select
 
