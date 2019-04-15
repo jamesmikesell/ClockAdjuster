@@ -8,7 +8,7 @@ import { AudioCaptureComponent } from './components/audio-capture/audio-capture.
 import { ChartsModule } from 'ng2-charts';
 import { SpectrogramComponent } from './components/spectrogram/spectrogram.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatSliderModule, MatButtonModule, MatInputModule, MatExpansionModule, MatCheckboxModule } from '@angular/material';
+import { MatSliderModule, MatButtonModule, MatInputModule, MatExpansionModule, MatCheckboxModule, MatSelectModule } from '@angular/material';
 
 @NgModule({
   declarations: [
@@ -26,6 +26,7 @@ import { MatSliderModule, MatButtonModule, MatInputModule, MatExpansionModule, M
     MatInputModule,
     MatExpansionModule,
     MatCheckboxModule,
+    MatSelectModule,
     MatSliderModule
   ],
   providers: [],
