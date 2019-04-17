@@ -12,11 +12,13 @@ export class PeakTimeService {
   maxFramesToDisplay = 100;
   dbCutoff = 7;
   scrollPercentChange = new Subject<number>();
+  tickTimes: number[] = [];
 
-  private tickTimes: number[] = [];
   private scrolledToStartFrame: number;
   private _scrollPercent = 1;
-
+  private audioCaptureStartTime: number;
+  private startingFrameIndex = 0;
+  private dataEndTime: number;
 
   constructor(private signalProcessingService: SignalProcessingService,
     private audioCaptureService: AudioCaptureService) { }
@@ -40,7 +42,10 @@ export class PeakTimeService {
 
   clear(): void {
     this.tickTimes = [];
+    this.audioCaptureStartTime = undefined;
+    this.startingFrameIndex = 0;
   }
+
 
   findTickTimes(): void {
     let sampleRateSeconds = this.audioCaptureService.getSampleRate();
@@ -56,30 +61,25 @@ export class PeakTimeService {
     if (!this.tickTimes.length) {
       let firstPeakIndex = this.signalProcessingService.getMaxPeakIndex(samples);
       if (firstPeakIndex !== undefined) {
-        let firstPeakStartTime = dataEndTime - ((samples.length - firstPeakIndex) / sampleRateMs);
+        let firstPeakStartTime = dataEndTime - ((samples.length - firstPeakIndex - 1) / sampleRateMs);
         this.tickTimes.push(firstPeakStartTime);
+        this.audioCaptureStartTime = dataEndTime - ((samples.length - 1) / sampleRateMs);
+        this.startingFrameIndex = 1;
       } else {
         return;
       }
     }
 
+    this.dataEndTime = dataEndTime;
 
-    let firstPeakStartTime = this.tickTimes[0];
-    let lineDataEndTime = this.tickTimes[this.tickTimes.length - 1];
-    let dataStartTime = dataEndTime - (samples.length / sampleRateMs);
-    let minStart = Math.max(lineDataEndTime, dataStartTime);
-    let startingFrameIndex = Math.floor((minStart - firstPeakStartTime) / this.frameTimeSpanMs);
     //Find peak in each frame
     while (true) {
-      startingFrameIndex++;
-      let frameStartTime = startingFrameIndex * this.frameTimeSpanMs + firstPeakStartTime;
-
-      let frameEndTime = frameStartTime + this.frameTimeSpanMs;
-      if (frameEndTime > dataEndTime)
-        break;
-
-      let sampleStartIndex = Math.round(samples.length - ((dataEndTime - frameStartTime) * sampleRateMs));
+      let frameStartTime = this.startingFrameIndex * this.frameTimeSpanMs + this.audioCaptureStartTime;
+      let sampleStartIndex = Math.round(samples.length - 1 - ((dataEndTime - frameStartTime) * sampleRateMs));
       let sampleEndIndex = Math.round(sampleStartIndex + (this.frameTimeSpanMs * sampleRateMs));
+
+      if (sampleEndIndex > samples.length)
+        break;
 
       let frameSamples = samples.slice(sampleStartIndex, sampleEndIndex);
       let peakStartIndex;
@@ -94,6 +94,7 @@ export class PeakTimeService {
         let peakTime = peakMsIntoFrame + frameStartTime;
         this.tickTimes.push(peakTime);
       }
+      this.startingFrameIndex++;
     }
   }
 
@@ -106,16 +107,15 @@ export class PeakTimeService {
 
     let frameTimeSpan = this.frameTimeSpanMs;
     let firstTickTime = this.tickTimes[0];
-    let lastTickTime = this.tickTimes[this.tickTimes.length - 1];
-    let tickTimeSpan = lastTickTime - firstTickTime;
-    let framesInTimeSpan = Math.floor(tickTimeSpan / frameTimeSpan);
+    let tickTimeSpan = this.dataEndTime - firstTickTime;
+    let framesInTimeSpan = Math.round(tickTimeSpan / frameTimeSpan);
 
     let windowStartFrameIndex: number;
     let windowStartTime: number;
     let windowEndTime: number;
     if (framesInTimeSpan <= maxFramesToDisplay) {
       windowStartTime = firstTickTime;
-      windowEndTime = lastTickTime;
+      windowEndTime = this.dataEndTime;
       windowStartFrameIndex = 0;
     } else {
       let scrollPercent = this._scrollPercent;
@@ -130,13 +130,14 @@ export class PeakTimeService {
       if (scrollPercent !== 1) {
         this.scrolledToStartFrame = firstFrameIndex;
         // Move scroll bar so that it's location accurately reflects the displayed frame as time progresses / mores ticks get added
-        this.scrollPercentChange.next(firstFrameIndex / (framesInTimeSpan - maxFramesToDisplay));
+        this._scrollPercent = firstFrameIndex / (framesInTimeSpan - maxFramesToDisplay);
+        this.scrollPercentChange.next(this._scrollPercent);
       }
 
       let lastFrameIndex = firstFrameIndex + maxFramesToDisplay;
 
-      windowStartTime = (firstFrameIndex * frameTimeSpan) + firstTickTime;
-      windowEndTime = (lastFrameIndex * frameTimeSpan) + firstTickTime;
+      windowStartTime = firstFrameIndex * frameTimeSpan;
+      windowEndTime = lastFrameIndex * frameTimeSpan;
       windowStartFrameIndex = firstFrameIndex;
     }
 
@@ -152,7 +153,7 @@ export class PeakTimeService {
       let firstTickTime = this.tickTimes[0];
 
       let timeSpan = endTime - startTime;
-      let frameCount = Math.floor(timeSpan / frameTimeSpan) + 1;
+      let frameCount = Math.round(timeSpan / frameTimeSpan);
 
       let frames = new Array<number>(frameCount);
       for (let i = 0; i < frames.length; i++)
