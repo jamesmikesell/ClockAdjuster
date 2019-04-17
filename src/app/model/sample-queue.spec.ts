@@ -230,4 +230,20 @@ describe('Queue Test', () => {
         expect(data[1])
             .toEqual(new Float32Array([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]));
     });
+
+
+    it('single add greater than capacity', () => {
+        let queue = new SampleQueue(3);
+        queue.add(150, new Float32Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]));
+
+
+        let data = queue.getData(-1);
+
+        let time = data[0];
+        expect(time)
+            .toEqual(150);
+
+        expect(data[1])
+            .toEqual(new Float32Array([17, 18, 19]));
+    });
 });
