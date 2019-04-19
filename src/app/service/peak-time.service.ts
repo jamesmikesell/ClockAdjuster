@@ -165,7 +165,7 @@ export class PeakTimeService {
         const tickTime = this.tickTimes[i];
         if (tickTime >= startTime && tickTime <= endTime) {
           let tickTimeSinceFirstTick = tickTime - firstTickTime;
-          let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan) ;
+          let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan) - startingFrameIndex;
 
           if (frameIndex < 0)
             console.log(frameIndex);
