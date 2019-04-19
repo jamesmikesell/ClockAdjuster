@@ -28,7 +28,8 @@ describe('PeakTimeService', () => {
       0, 0, 0, y, 0, 0, 0, 0, 0, 0, // 10
       0, 0, 0, y, 0, 0, 0, 0, 0, 0, // 20
       0, 0, 0, 0, y, 0, 0, 0, 0, 0, // 30
-      0, 0, 0, 0, 0, y, 0, 0, 0, 0  // 40
+      0, 0, 0, 0, 0, y, 0, 0, 0, 0,  // 40
+      0, 0
     ]
   );
 
@@ -38,12 +39,13 @@ describe('PeakTimeService', () => {
     const audioService: MockAudioService = TestBed.get(AudioCaptureService);
 
     audioService.sampleRate = 10;
-    audioService.sampleQueue.add(5000, sampleData);
+    audioService.sampleQueue.add(5200, sampleData);
     service.findTickTimes();
 
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
     expect(service.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
+    expect(service.getFramesToDisplay().startTime).toEqual(0);
   });
 
 
@@ -53,7 +55,7 @@ describe('PeakTimeService', () => {
     const audioService: MockAudioService = TestBed.get(AudioCaptureService);
 
     audioService.sampleRate = 10;
-    audioService.sampleQueue.add(5000, sampleData);
+    audioService.sampleQueue.add(5200, sampleData);
     service.findTickTimes();
 
     service.maxFramesToDisplay = 3;
@@ -63,6 +65,7 @@ describe('PeakTimeService', () => {
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
     expect(service.getFramesToDisplay().frames).toEqual([-100, 0, 100]);
+    expect(service.getFramesToDisplay().startTime).toEqual(2000);
   });
 
 
@@ -71,7 +74,7 @@ describe('PeakTimeService', () => {
     const audioService: MockAudioService = TestBed.get(AudioCaptureService);
 
     audioService.sampleRate = 10;
-    audioService.sampleQueue.add(5000, sampleData);
+    audioService.sampleQueue.add(5200, sampleData);
     service.findTickTimes();
 
     service.maxFramesToDisplay = 3;
@@ -82,6 +85,7 @@ describe('PeakTimeService', () => {
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
     expect(service.getFramesToDisplay().frames).toEqual([0, -100, -100]);
+    expect(service.getFramesToDisplay().startTime).toEqual(0);
   });
 
 
@@ -90,35 +94,38 @@ describe('PeakTimeService', () => {
     const service: PeakTimeService = TestBed.get(PeakTimeService);
     const audioService: MockAudioService = TestBed.get(AudioCaptureService);
 
-    audioService.sampleQueue = new SampleQueue(20);
+    audioService.sampleQueue = new SampleQueue(24);
 
     let x = 1;
     audioService.sampleRate = 10;
-    audioService.sampleQueue.add(2000, new Float32Array(
+    audioService.sampleQueue.add(2200, new Float32Array(
       [
         // 1, 2, 3, 4, 5, 6, 7, 8, 9   - Index
         // 2, 3, 4, 5, 6, 7, 8, 9, 10  - Time
         0, 0, 0, 0, x, 0, 0, 0, 0, 0, //  0
-        0, 0, 0, x, 0, 0, 0, 0, 0, 0  // 10
+        0, 0, 0, x, 0, 0, 0, 0, 0, 0,  // 10
+        0, 0
       ]
     ));
     service.findTickTimes();
 
-    audioService.sampleQueue.add(4000, new Float32Array(
+    audioService.sampleQueue.add(4300, new Float32Array(
       [
         // 1, 2, 3, 4, 5, 6, 7, 8, 9   - Index
         // 2, 3, 4, 5, 6, 7, 8, 9, 10  - Time
         0, 0, 0, x, 0, 0, 0, 0, 0, 0, // 20
-        0, 0, 0, 0, x, 0, 0, 0, 0, 0  // 30
+        0, 0, 0, 0, x, 0, 0, 0, 0, 0,  // 30
+        0, 0, 0
       ]
     ));
     service.findTickTimes();
 
-    audioService.sampleQueue.add(5000, new Float32Array(
+    audioService.sampleQueue.add(5200, new Float32Array(
       [
         // 1, 2, 3, 4, 5, 6, 7, 8, 9   - Index
         // 2, 3, 4, 5, 6, 7, 8, 9, 10  - Time
-        0, 0, 0, 0, 0, x, 0, 0, 0, 0  // 40
+        0, 0, 0, 0, 0, x, 0, 0, 0, 0,  // 40
+        0, 0
       ]
     ));
     service.findTickTimes();
@@ -126,6 +133,7 @@ describe('PeakTimeService', () => {
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
     expect(service.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
+    expect(service.getFramesToDisplay().startTime).toEqual(0);
   });
 });
 
