@@ -78,7 +78,8 @@ export class PeakTimeService {
       let sampleStartIndex = Math.round(samples.length - 1 - ((dataEndTime - frameStartTime) * sampleRateMs));
       let sampleEndIndex = Math.round(sampleStartIndex + (this.frameTimeSpanMs * sampleRateMs));
 
-      if (sampleEndIndex > samples.length)
+      //Break if we're analyzing the last 200 ms of sample data (we don't want to analyze a peak that potentially isn't finished peaking)
+      if (sampleEndIndex > samples.length - (200 * sampleRateMs))
         break;
 
       let frameSamples = samples.slice(sampleStartIndex, sampleEndIndex);
@@ -92,6 +93,7 @@ export class PeakTimeService {
       if (peakStartIndex !== undefined) {
         let peakMsIntoFrame = peakStartIndex / sampleRateMs;
         let peakTime = peakMsIntoFrame + frameStartTime;
+
         this.tickTimes.push(peakTime);
       }
       this.startingFrameIndex++;
@@ -114,7 +116,7 @@ export class PeakTimeService {
     let windowStartTime: number;
     let windowEndTime: number;
     if (framesInTimeSpan <= maxFramesToDisplay) {
-      windowStartTime = firstTickTime;
+      windowStartTime = 0;
       windowEndTime = this.dataEndTime;
       windowStartFrameIndex = 0;
     } else {
@@ -143,7 +145,7 @@ export class PeakTimeService {
 
     let framesToDisplay = this.splitTickTimesIntoFrames(windowStartTime, windowEndTime, windowStartFrameIndex);
 
-    return new FramesToDisplay(framesToDisplay, windowStartTime - firstTickTime);
+    return new FramesToDisplay(framesToDisplay, windowStartTime);
   }
 
 
@@ -163,7 +165,10 @@ export class PeakTimeService {
         const tickTime = this.tickTimes[i];
         if (tickTime >= startTime && tickTime <= endTime) {
           let tickTimeSinceFirstTick = tickTime - firstTickTime;
-          let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan) - startingFrameIndex;
+          let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan) ;
+
+          if (frameIndex < 0)
+            console.log(frameIndex);
 
           let frameTime = (frameIndex + startingFrameIndex) * frameTimeSpan;
 
