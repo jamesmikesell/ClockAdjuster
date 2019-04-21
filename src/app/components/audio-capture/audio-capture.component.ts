@@ -167,15 +167,13 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
   private findAndDisplayTicks(): void {
     this.peakTimeService.findTickTimes();
-
-    let frames = this.peakTimeService.getFramesToDisplay();
-    if (frames)
-      this.syncFramesWithGraph(frames.frames, frames.startTime);
+    this.displayTicks();
   }
 
   @HostListener('window:resize', ['$event'])
   windowResize(): void {
     this.peakTimeService.maxFramesToDisplay = this.getMaxFramesToDisplay();
+    this.displayTicks();
   }
 
   private getMaxFramesToDisplay(): number {
@@ -189,31 +187,36 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     this.scrollValue = value;
     this.peakTimeService.scrollPercent = this.scrollValue / this.scrollMax;
 
-    let frames = this.peakTimeService.getFramesToDisplay();
-    if (frames)
-      this.syncFramesWithGraph(frames.frames, frames.startTime);
+    this.displayTicks();
   }
 
-  private syncFramesWithGraph(frames: number[], windowStartTime: number): void {
+  private displayTicks(): void {
+    let frames = this.peakTimeService.getFramesToDisplay();
+    if (frames)
+      this.syncFramesWithGraph(frames.frames, frames.startTime, frames.firstFrameTime);
+  }
+
+  private syncFramesWithGraph(frames: number[], windowStartTime: number, firstFrameTime: number): void {
     // Most recent graph data doesn't equal it's counter part in frame data (likely change in BPH);
     // clear and start over
-    if (this.lineData.length > frames.length) {
-      this.lineData = [];
-      this.labelData = [];
-    }
+    let maxFrames = this.getMaxFramesToDisplay();
+    if (this.lineData.length !== maxFrames)
+      this.lineData.length = maxFrames;
+    if (this.labelData.length !== maxFrames)
+      this.labelData.length = maxFrames;
 
     // We're syncing arrays as just resetting the array each time has performance implications when the graph re-renders
-    for (let i = 0; i < frames.length; i++) {
-      let seconds = (Math.round((windowStartTime + (this.getFrameTimeSpanMs() * i)) / 10) / 100).toString();
+    for (let i = 0; i < maxFrames; i++) {
+      if (i >= frames.length) {
+        this.labelData[i] = "";
+        this.lineData[i] = undefined;
+      } else {
+        let seconds = (Math.round((windowStartTime - firstFrameTime + (this.getFrameTimeSpanMs() * i)) / 10) / 100).toString();
 
-      if (i < this.lineData.length) {
         if (this.labelData[i] !== seconds)
           this.labelData[i] = seconds;
         if (this.lineData[i] !== frames[i])
           this.lineData[i] = frames[i];
-      } else {
-        this.labelData.push(seconds);
-        this.lineData.push(frames[i]);
       }
     }
   }
