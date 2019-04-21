@@ -36,7 +36,7 @@ export class PeakTimeService {
 
   getFirstTickTime(): number {
     if (this.tickTimes.length)
-      return this.tickTimes[this.tickTimes.length - 1];
+      return this.tickTimes[0];
     return undefined;
   }
 
@@ -106,19 +106,16 @@ export class PeakTimeService {
       return undefined;
 
     let maxFramesToDisplay = this.maxFramesToDisplay;
-
     let frameTimeSpan = this.frameTimeSpanMs;
     let firstTickTime = this.tickTimes[0];
     let tickTimeSpan = this.dataEndTime - firstTickTime;
     let framesInTimeSpan = Math.round(tickTimeSpan / frameTimeSpan);
-
     let windowStartFrameIndex: number;
-    let windowStartTime: number;
-    let windowEndTime: number;
+    let frameCount: number;
+
     if (framesInTimeSpan <= maxFramesToDisplay) {
-      windowStartTime = 0;
-      windowEndTime = this.dataEndTime;
       windowStartFrameIndex = 0;
+      frameCount = framesInTimeSpan;
     } else {
       let scrollPercent = this._scrollPercent;
       let firstFrameIndex: number;
@@ -128,7 +125,6 @@ export class PeakTimeService {
         firstFrameIndex = Math.round(scrollPercent * (framesInTimeSpan - maxFramesToDisplay));
       }
 
-
       if (scrollPercent !== 1) {
         this.scrolledToStartFrame = firstFrameIndex;
         // Move scroll bar so that it's location accurately reflects the displayed frame as time progresses / mores ticks get added
@@ -136,26 +132,22 @@ export class PeakTimeService {
         this.scrollPercentChange.next(this._scrollPercent);
       }
 
-      let lastFrameIndex = firstFrameIndex + maxFramesToDisplay;
-
-      windowStartTime = firstFrameIndex * frameTimeSpan;
-      windowEndTime = lastFrameIndex * frameTimeSpan;
       windowStartFrameIndex = firstFrameIndex;
+      frameCount = maxFramesToDisplay;
     }
 
-    let framesToDisplay = this.splitTickTimesIntoFrames(windowStartTime, windowEndTime, windowStartFrameIndex);
+    let framesToDisplay = this.splitTickTimesIntoFrames(windowStartFrameIndex, frameCount);
 
-    return new FramesToDisplay(framesToDisplay, windowStartTime);
+    let firstFrameStartTime = firstTickTime - (frameTimeSpan / 2);
+    let windowStartTime = (windowStartFrameIndex * frameTimeSpan) + firstFrameStartTime;
+    return new FramesToDisplay(framesToDisplay, windowStartTime, firstFrameStartTime);
   }
 
 
-  private splitTickTimesIntoFrames(startTime: number, endTime: number, startingFrameIndex: number): number[] {
+  private splitTickTimesIntoFrames(startingFrameIndex: number, frameCount: number): number[] {
     if (this.tickTimes.length) {
       let frameTimeSpan = this.frameTimeSpanMs;
       let firstTickTime = this.tickTimes[0];
-
-      let timeSpan = endTime - startTime;
-      let frameCount = Math.round(timeSpan / frameTimeSpan);
 
       let frames = new Array<number>(frameCount);
       for (let i = 0; i < frames.length; i++)
@@ -163,15 +155,11 @@ export class PeakTimeService {
 
       for (let i = 0; i < this.tickTimes.length; i++) {
         const tickTime = this.tickTimes[i];
-        if (tickTime >= startTime && tickTime <= endTime) {
-          let tickTimeSinceFirstTick = tickTime - firstTickTime;
-          let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan) - startingFrameIndex;
+        let tickTimeSinceFirstTick = tickTime - firstTickTime;
+        let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan) - startingFrameIndex;
 
-          if (frameIndex < 0)
-            console.log(frameIndex);
-
+        if (frameIndex >= 0 && frameIndex < frameCount) {
           let frameTime = (frameIndex + startingFrameIndex) * frameTimeSpan;
-
           frames[frameIndex] = tickTimeSinceFirstTick - frameTime;
         }
       }
@@ -192,6 +180,7 @@ export enum PeakDetectionMethod {
 
 class FramesToDisplay {
   constructor(public frames: number[],
-    public startTime: number) { }
+    public startTime: number,
+    public firstFrameTime: number) { }
 
 }
