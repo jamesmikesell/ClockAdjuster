@@ -4,6 +4,7 @@ import { PeakTimeService } from './peak-time.service';
 import { AudioCaptureService } from './audio-capture.service';
 import { SignalProcessingService } from './signal-processing.service';
 import { SampleQueue } from '../model/sample-queue';
+import { TimeService } from './time.service';
 
 describe('PeakTimeService', () => {
   beforeEach(() => TestBed.configureTestingModule({
@@ -11,6 +12,10 @@ describe('PeakTimeService', () => {
       {
         provide: AudioCaptureService,
         useClass: MockAudioService
+      },
+      {
+        provide: TimeService,
+        useClass: MockTimeService
       },
       {
         provide: SignalProcessingService,
@@ -157,7 +162,7 @@ describe('PeakTimeService', () => {
       [
         // 1, 2, 3, 4, 5, 6, 7, 8, 9   - Index
         // 2, 3, 4, 5, 6, 7, 8, 9, 10  - Time
-              0, x, 0, 0, 0, 0, 0, 0, // 20
+        0, x, 0, 0, 0, 0, 0, 0, // 20
         0, 0, 0, 0, x, 0, 0, 0, 0, 0,  // 30
         0, 0, 0
       ]
@@ -168,7 +173,7 @@ describe('PeakTimeService', () => {
       [
         // 1, 2, 3, 4, 5, 6, 7, 8, 9   - Index
         // 2, 3, 4, 5, 6, 7, 8, 9, 10  - Time
-                 0, 0, x, 0, 0, 0, 0,  // 40
+        0, 0, x, 0, 0, 0, 0,  // 40
         0, 0
       ]
     ));
@@ -189,5 +194,11 @@ class MockAudioService {
 
   getSampleRate(): number {
     return this.sampleRate;
+  }
+}
+
+class MockTimeService {
+  getDriftRate(): number {
+    return undefined;
   }
 }
