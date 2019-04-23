@@ -7,7 +7,10 @@
   <mat-label>Beats Per Hour</mat-label>
   <input matInput type="number" step="1" [(ngModel)]="bph">
 </mat-form-field>
-<mat-checkbox [(ngModel)]="noSleep.keepAwake">Keep Screen Awake</mat-checkbox> <br>
+<mat-checkbox [(ngModel)]="noSleep.keepAwake">Keep Screen Awake</mat-checkbox> 
+<mat-checkbox [(ngModel)]="peakTimeService.useNetworkTime">Use Network Time</mat-checkbox> 
+
+<br>
 
 
 

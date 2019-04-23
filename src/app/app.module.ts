@@ -9,6 +9,7 @@ import { ChartsModule } from 'ng2-charts';
 import { SpectrogramComponent } from './components/spectrogram/spectrogram.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSliderModule, MatButtonModule, MatInputModule, MatExpansionModule, MatCheckboxModule, MatSelectModule } from '@angular/material';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -18,6 +19,7 @@ import { MatSliderModule, MatButtonModule, MatInputModule, MatExpansionModule, M
   ],
   imports: [
     BrowserModule,
+    HttpClientModule,
     AppRoutingModule,
     FormsModule,
     ChartsModule,
