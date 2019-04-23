@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SignalProcessingService } from './signal-processing.service';
 import { AudioCaptureService } from './audio-capture.service';
 import { Subject } from 'rxjs';
+import { TimeService } from './time.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +14,7 @@ export class PeakTimeService {
   dbCutoff = 7;
   scrollPercentChange = new Subject<number>();
   tickTimes: number[] = [];
+  _useNetworkTime = false;
 
   private scrolledToStartFrame: number;
   private _scrollPercent = 1;
@@ -21,8 +23,17 @@ export class PeakTimeService {
   private dataEndTime: number;
 
   constructor(private signalProcessingService: SignalProcessingService,
+    private timeService: TimeService,
     private audioCaptureService: AudioCaptureService) { }
 
+
+  get useNetworkTime(): boolean {
+    return this._useNetworkTime;
+  }
+
+  set useNetworkTime(value: boolean) {
+    this._useNetworkTime = value;
+  }
 
   get scrollPercent(): number {
     return this._scrollPercent;
@@ -145,6 +156,7 @@ export class PeakTimeService {
 
 
   private splitTickTimesIntoFrames(startingFrameIndex: number, frameCount: number): number[] {
+    let driftRate = this.timeService.getDriftRate();
     if (this.tickTimes.length) {
       let frameTimeSpan = this.frameTimeSpanMs;
       let firstTickTime = this.tickTimes[0];
@@ -156,6 +168,9 @@ export class PeakTimeService {
       for (let i = 0; i < this.tickTimes.length; i++) {
         const tickTime = this.tickTimes[i];
         let tickTimeSinceFirstTick = tickTime - firstTickTime;
+        if (this._useNetworkTime && driftRate) 
+          tickTimeSinceFirstTick = (driftRate * tickTimeSinceFirstTick) + tickTimeSinceFirstTick;
+
         let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan) - startingFrameIndex;
 
         if (frameIndex >= 0 && frameIndex < frameCount) {
@@ -169,6 +184,7 @@ export class PeakTimeService {
       return undefined;
     }
   }
+
 
 }
 
