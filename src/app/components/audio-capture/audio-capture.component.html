@@ -22,15 +22,23 @@
       </mat-panel-description>
     </mat-expansion-panel-header>
 
-    <mat-checkbox [(ngModel)]="useNetworkTime">Use Network Time</mat-checkbox>
-    <div *ngIf="useNetworkTime && timeService.estimatedDriftErrorSecondsPerDay">
-      +/- {{timeService.estimatedDriftErrorSecondsPerDay.toPrecision(3)}} seconds per day
-    </div>
     <div>
       Compensates the local system clock against an atomic time source from the Internet. Due to network limitations,
       over short periods of times (less than 30 minutes) enabling this option can actually be less accurate than the
       native system clock. Network time is checked every 10 minutes.
     </div>
+    <br>
+    <mat-checkbox [(ngModel)]="useNetworkTime">Use Network Time</mat-checkbox>
+    <div *ngIf="useNetworkTime && timeService.estimatedDriftErrorSecondsPerDay">
+      <br>
+      System clock drifts at a rate of {{(timeService.driftRate * 60 * 60 * 24).toPrecision(3)}} seconds per day (+/-
+      {{timeService.estimatedDriftErrorSecondsPerDay.toPrecision(3)}})
+      <br>
+      Note: While internally the system clock appears to be drifting at this rate, this drift will rarely be noticed
+      day-to-day as the displayed system time is usually automatically updated.
+    </div>
+
+
   </mat-expansion-panel>
 
 

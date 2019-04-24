@@ -7,7 +7,6 @@ import { HttpClient } from '@angular/common/http';
 })
 export class TimeService {
 
-    private localOffset: number = undefined;
     private offsetTimes: number[] = [];
     private refreshTimes: number[] = [];
     private periodicResyncTimer: Subscription;
@@ -17,6 +16,15 @@ export class TimeService {
 
     samplesPerRefresh = 10;
     refreshIntervalMinutes = 10;
+
+    /**
+    Usage: realTimeDuration = (driftRate * localTimeDuration) + localTimeDuration
+
+    Note: Network related errors can cause far greater error than the actual local clock drift.  As such,
+    this should only be used when there is a sufficient time span between the last check of server time and first check
+    of server time (IE 30+ minutes).
+    */
+    driftRate: number;
 
     /** +/- seconds per day error
      * 
@@ -32,14 +40,14 @@ export class TimeService {
     }
 
     getRealTime(): Date {
-        if (this.localOffset === undefined)
+        if (!this.offsetTimes.length)
             return undefined;
-        return new Date(performance.now() + this.localOffset);
+        return new Date(performance.now() + this.offsetTimes[this.offsetTimes.length - 1]);
     }
 
     private updateDriftError(): void {
         if (this.refreshTimes.length >= 2) {
-            let msErrorPerCheck = 45;
+            let msErrorPerCheck = 100;
             let localTimeDuration = this.refreshTimes[this.refreshTimes.length - 1] - this.refreshTimes[0];
             this.estimatedDriftErrorSecondsPerDay = (msErrorPerCheck / localTimeDuration) * 60 * 60 * 24;
         } else {
@@ -48,14 +56,7 @@ export class TimeService {
     }
 
 
-    /**
-    Usage: realTimeDuration = (driftRate * localTimeDuration) + localTimeDuration
-
-    Note: Network related errors can cause far greater error than the actual local clock drift.  As such,
-    this should only be used when there is a sufficient time span between the last check of server time and first check
-    of server time (IE 30+ minutes).
-    */
-    getDriftRate(): number {
+    private updateDriftRate(): void {
         /**
         firstOffset = 101; firstLocalTime = 10, firstServerTime = 111
         lastOffset = 102; lastLocalTime = 999, lastServerTime = 1101
@@ -75,7 +76,7 @@ export class TimeService {
         let drift = this.offsetTimes[this.offsetTimes.length - 1] - this.offsetTimes[0];
         let localTimeDuration = this.refreshTimes[this.refreshTimes.length - 1] - this.refreshTimes[0];
         let driftRate = drift / localTimeDuration;
-        return driftRate;
+        this.driftRate = driftRate;
     }
 
 
@@ -184,7 +185,6 @@ export class TimeService {
         }
 
         let avgOffset = this.getAverage(offsets);
-        this.localOffset = avgOffset;
         this.offsetTimes.push(avgOffset);
         this.refreshTimes.push(callEnd);
         this.performanceTimeOffsetAtSync = Date.now() - performance.now();
@@ -194,8 +194,9 @@ export class TimeService {
             this.scheduleLargeDriftCheck();
         }
 
-        this.logDriftRate();
+        this.updateDriftRate();
         this.updateDriftError();
+        this.logDriftRate();
     }
 
     private async sleep(msec: number): Promise<void> {
@@ -204,7 +205,7 @@ export class TimeService {
 
 
     private logDriftRate(): void {
-        let drift = this.getDriftRate();
+        let drift = this.driftRate;
         if (drift) {
             let driftPerMin = drift * 1000 * 60;
             console.log(`Drift ${Math.round(driftPerMin * 100) / 100} ms/min`);
