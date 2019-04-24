@@ -7,9 +7,7 @@
   <mat-label>Beats Per Hour</mat-label>
   <input matInput type="number" step="1" [(ngModel)]="bph">
 </mat-form-field>
-<mat-checkbox [(ngModel)]="noSleep.keepAwake">Keep Screen Awake</mat-checkbox> 
-<mat-checkbox [(ngModel)]="peakTimeService.useNetworkTime">Use Network Time</mat-checkbox> 
-
+<mat-checkbox [(ngModel)]="noSleep.keepAwake">Keep Screen Awake</mat-checkbox>
 <br>
 
 
@@ -18,7 +16,30 @@
   <mat-expansion-panel #spectrographParent>
     <mat-expansion-panel-header>
       <mat-panel-title>
-        Filter Audio
+        Network Time Compensation {{getNetworkTimeStatus()}}
+      </mat-panel-title>
+      <mat-panel-description>
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+
+    <mat-checkbox [(ngModel)]="useNetworkTime">Use Network Time</mat-checkbox>
+    <div *ngIf="useNetworkTime && timeService.estimatedDriftErrorSecondsPerDay">
+      +/- {{timeService.estimatedDriftErrorSecondsPerDay.toPrecision(3)}} seconds per day
+    </div>
+    <div>
+      Compensates the local system clock against an atomic time source from the Internet. Due to network limitations,
+      over short periods of times (less than 30 minutes) enabling this option can actually be less accurate than the
+      native system clock. Network time is checked every 10 minutes.
+    </div>
+  </mat-expansion-panel>
+
+
+
+
+  <mat-expansion-panel #spectrographParent>
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        Audio Filter {{audioCaptureService.getBandWidth() ? '[Enabled]' : ''}}
       </mat-panel-title>
       <mat-panel-description>
       </mat-panel-description>

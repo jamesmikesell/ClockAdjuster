@@ -13,9 +13,18 @@ export class TimeService {
     private periodicResyncTimer: Subscription;
     private largeDriftCheckTimer: Subscription;
     private performanceTimeOffsetAtSync: number;
+    private enabled = false;
 
     samplesPerRefresh = 10;
-    refreshMinutes = 10;
+    refreshIntervalMinutes = 10;
+
+    /** +/- seconds per day error
+     * 
+     * Gets the estimated error ratio of the drift.  If drift has only been calculated over a short
+     * period of time (few minutes), the error will be quite high.  As such
+     * using the drift rate should only be used after a long period of time.
+     */
+    estimatedDriftErrorSecondsPerDay: number;
 
 
     constructor(private http: HttpClient) {
@@ -28,9 +37,70 @@ export class TimeService {
         return new Date(performance.now() + this.localOffset);
     }
 
-    private scheduleResync(): void {
+    private updateDriftError(): void {
+        if (this.refreshTimes.length >= 2) {
+            let msErrorPerCheck = 45;
+            let localTimeDuration = this.refreshTimes[this.refreshTimes.length - 1] - this.refreshTimes[0];
+            this.estimatedDriftErrorSecondsPerDay = (msErrorPerCheck / localTimeDuration) * 60 * 60 * 24;
+        } else {
+            this.estimatedDriftErrorSecondsPerDay = undefined;
+        }
+    }
+
+
+    /**
+    Usage: realTimeDuration = (driftRate * localTimeDuration) + localTimeDuration
+
+    Note: Network related errors can cause far greater error than the actual local clock drift.  As such,
+    this should only be used when there is a sufficient time span between the last check of server time and first check
+    of server time (IE 30+ minutes).
+    */
+    getDriftRate(): number {
+        /**
+        firstOffset = 101; firstLocalTime = 10, firstServerTime = 111
+        lastOffset = 102; lastLocalTime = 999, lastServerTime = 1101
+    
+        localTimeDuration = 989   (999 - 10)
+        drift = 1                 (102 - 101)
+        driftRate = 1/989
+    
+        realTimeDuration = (driftRate * localTimeDuration) + localTimeDuration
+        calculatedCurrentTime = realTimeDuration + firstOffset + firstLocalTime
+        1101 = (1/989)*989 + 989 + 101 + 10
+         */
+
+        if (this.offsetTimes.length < 2)
+            return undefined;
+
+        let drift = this.offsetTimes[this.offsetTimes.length - 1] - this.offsetTimes[0];
+        let localTimeDuration = this.refreshTimes[this.refreshTimes.length - 1] - this.refreshTimes[0];
+        let driftRate = drift / localTimeDuration;
+        return driftRate;
+    }
+
+
+    setEnabled(enabled: boolean): void {
+        this.enabled = enabled;
+        this.cancelLargeDriftCheckTimer();
         this.cancelPeriodicResync();
-        this.periodicResyncTimer = timer(this.refreshMinutes * 60 * 1000).subscribe(() => {
+        if (enabled) {
+            if (this.refreshTimes.length) {
+                let lastCheck = performance.now() - this.refreshTimes[this.refreshTimes.length - 1];
+                let lastCheckMinutes = lastCheck / 1000 / 60;
+                if (lastCheckMinutes > this.refreshIntervalMinutes) {
+                    this.calculateOffset();
+                } else {
+                    let checkInMinutes = this.refreshIntervalMinutes - lastCheckMinutes;
+                    this.scheduleResync(checkInMinutes * 60 * 1000);
+                }
+            }
+        }
+    }
+
+    private scheduleResync(delayMs?: number): void {
+        this.cancelPeriodicResync();
+        delayMs = delayMs === undefined ? this.refreshIntervalMinutes * 60 * 1000 : delayMs;
+        this.periodicResyncTimer = timer(delayMs).subscribe(() => {
             this.calculateOffset();
         });
     }
@@ -58,13 +128,18 @@ export class TimeService {
         // This will get triggered on either a system clock change, or if the device sleeps / wakes
         if (this.performanceTimeOffsetAtSync) {
             let deltaWithPerformanceSync = Math.abs((Date.now() - performance.now()) - this.performanceTimeOffsetAtSync);
-            if (deltaWithPerformanceSync > 200) {
-                console.log("Large drift detected, resyncing");
+            if (deltaWithPerformanceSync > 30 * 1000) {
+                console.log("Large drift detected, resyncing, resetting drift calculations");
+                this.resetDriftCalculations();
                 this.calculateOffset();
             }
         }
     }
 
+    private resetDriftCalculations(): void {
+        this.offsetTimes = [];
+        this.refreshTimes = [];
+    }
 
     private async calculateOffset(): Promise<void> {
         this.cancelPeriodicResync();
@@ -114,9 +189,13 @@ export class TimeService {
         this.refreshTimes.push(callEnd);
         this.performanceTimeOffsetAtSync = Date.now() - performance.now();
 
-        this.scheduleResync();
-        this.scheduleLargeDriftCheck();
+        if (this.enabled) {
+            this.scheduleResync();
+            this.scheduleLargeDriftCheck();
+        }
+
         this.logDriftRate();
+        this.updateDriftError();
     }
 
     private async sleep(msec: number): Promise<void> {
@@ -130,36 +209,6 @@ export class TimeService {
             let driftPerMin = drift * 1000 * 60;
             console.log(`Drift ${Math.round(driftPerMin * 100) / 100} ms/min`);
         }
-    }
-
-    /**
-    Usage: realTimeDuration = (driftRate * localTimeDuration) + localTimeDuration
-
-    Note: Network related errors can cause far greater error than the actual local clock drift.  As such,
-    this should only be used when there is a sufficient time span between the last check of server time and first check
-    of server time (IE 30+ minutes).
-    */
-    getDriftRate(): number {
-        /**
-        firstOffset = 101; firstLocalTime = 10, firstServerTime = 111
-        lastOffset = 102; lastLocalTime = 999, lastServerTime = 1101
-
-        localTimeDuration = 989   (999 - 10)
-        drift = 1                 (102 - 101)
-        driftRate = 1/989
-
-        realTimeDuration = (driftRate * localTimeDuration) + localTimeDuration
-        calculatedCurrentTime = realTimeDuration + firstOffset + firstLocalTime
-        1101 = (1/989)*989 + 989 + 101 + 10
-         */
-
-        if (this.offsetTimes.length < 2)
-            return undefined;
-
-        let drift = this.offsetTimes[this.offsetTimes.length - 1] - this.offsetTimes[0];
-        let localTimeDuration = this.refreshTimes[this.refreshTimes.length - 1] - this.refreshTimes[0];
-        let driftRate = drift / localTimeDuration;
-        return driftRate;
     }
 
     private getAverage(values: number[]): number {

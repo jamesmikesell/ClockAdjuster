@@ -5,6 +5,7 @@ import { AudioCaptureService } from '../../service/audio-capture.service';
 import { environment } from '../../../environments/environment';
 import { NoSleepService } from '../../service/no-sleep.service';
 import { PeakTimeService, PeakDetectionMethod } from '../../service/peak-time.service';
+import { TimeService } from '../../service/time.service';
 
 @Component({
   selector: 'app-audio-capture',
@@ -27,15 +28,13 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
   constructor(public audioCaptureService: AudioCaptureService,
     public noSleep: NoSleepService,
-    public peakTimeService: PeakTimeService) {
-
-  }
+    public timeService: TimeService,
+    public peakTimeService: PeakTimeService) { }
 
   ngOnInit(): void {
     this.peakTimeService.maxFramesToDisplay = this.getMaxFramesToDisplay();
     this.peakTimeService.frameTimeSpanMs = this.getFrameTimeSpanMs();
     this.peakTimeService.scrollPercentChange.subscribe(percent => this.scrollValue = percent * this.scrollMax);
-
   }
 
   ngOnDestroy(): void {
@@ -48,6 +47,28 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   getVersion(): string {
     return environment.version;
   }
+
+  getNetworkTimeStatus(): string {
+    if (!this.useNetworkTime) {
+      return "";
+    } else {
+      if (this.timeService.estimatedDriftErrorSecondsPerDay){
+        return "[Enabled]";
+      }else{
+        return "[Pending]";
+      }
+    }
+
+  }
+
+  get useNetworkTime(): boolean {
+    return this.peakTimeService.useNetworkTime;
+  }
+  set useNetworkTime(value: boolean) {
+    this.peakTimeService.useNetworkTime = value;
+    this.timeService.setEnabled(value);
+  }
+
 
   private startUpdateTimer(): void {
     this.periodicUpdate = timer(1000, 100).subscribe(() => {
