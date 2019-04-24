@@ -14,9 +14,9 @@ export class PeakTimeService {
   dbCutoff = 7;
   scrollPercentChange = new Subject<number>();
   tickTimes: number[] = [];
-  _useNetworkTime = false;
-
+  
   private scrolledToStartFrame: number;
+  private _useNetworkTime = false;
   private _scrollPercent = 1;
   private audioCaptureStartTime: number;
   private startingFrameIndex = 0;
