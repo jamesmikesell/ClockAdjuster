@@ -156,7 +156,6 @@ export class PeakTimeService {
 
 
   private splitTickTimesIntoFrames(startingFrameIndex: number, frameCount: number): number[] {
-    let driftRate = this.timeService.getDriftRate();
     if (this.tickTimes.length) {
       let frameTimeSpan = this.frameTimeSpanMs;
       let firstTickTime = this.tickTimes[0];
@@ -168,8 +167,8 @@ export class PeakTimeService {
       for (let i = 0; i < this.tickTimes.length; i++) {
         const tickTime = this.tickTimes[i];
         let tickTimeSinceFirstTick = tickTime - firstTickTime;
-        if (this._useNetworkTime && driftRate) 
-          tickTimeSinceFirstTick = (driftRate * tickTimeSinceFirstTick) + tickTimeSinceFirstTick;
+        if (this._useNetworkTime && this.timeService.driftRate) 
+          tickTimeSinceFirstTick = (this.timeService.driftRate * tickTimeSinceFirstTick) + tickTimeSinceFirstTick;
 
         let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan) - startingFrameIndex;
 
