@@ -23,9 +23,9 @@
     </mat-expansion-panel-header>
 
     <div>
-      Compensates the local system clock against an atomic time source from the Internet. Due to network limitations,
-      over short periods of times (less than 30 minutes) enabling this option can actually be less accurate than the
-      native system clock. Network time is checked every 10 minutes.
+      Compensates the local system clock against an internet based atomic time source. However, note that due to network
+      limitations, over short periods of times (less than 30 minutes) enabling this option can actually be less accurate
+      than the native system clock. Network time is checked every 10 minutes.
     </div>
     <br>
     <mat-checkbox [(ngModel)]="useNetworkTime">Use Network Time</mat-checkbox>
