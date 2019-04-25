@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --port=4202",
     "startProd": "ng serve --prod",
     "build": "node ./build/build-pre.js && rm -rf docs && rm -rf dist && ng build --prod --base-href \"/ClockAdjuster/\" && mv dist/ClockAdjuster docs ",
     "test": "ng test",
