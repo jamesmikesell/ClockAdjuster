@@ -52,9 +52,9 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     if (!this.useNetworkTime) {
       return "";
     } else {
-      if (this.timeService.estimatedDriftErrorSecondsPerDay){
+      if (this.timeService.estimatedDriftErrorSecondsPerDay) {
         return "[Enabled]";
-      }else{
+      } else {
         return "[Pending]";
       }
     }
@@ -136,6 +136,9 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   }
 
   set bph(bph: number) {
+    if (!bph || bph < 0)
+      return;
+
     this._bph = bph;
     this.configureChart();
     this.peakTimeService.frameTimeSpanMs = this.getFrameTimeSpanMs();
