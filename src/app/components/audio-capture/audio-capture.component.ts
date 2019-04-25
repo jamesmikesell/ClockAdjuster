@@ -19,12 +19,16 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   chartOptions: ChartOptions;
   runningTime: string;
   PeakDetectionMethod = PeakDetectionMethod;
+  targetBph: number;
+  targetDelta: string;
 
   private periodicUpdate: Subscription;
   private _bph = 3600;
   private readonly scrollMax = 1000000;
   private scrollValue: number = this.scrollMax;
-
+  private _beatAdjuster = 0;
+  private beatAdjustmentStartBpm: number;
+  private beatAdjustmentUpdateDelayTimer: Subscription;
 
   constructor(public audioCaptureService: AudioCaptureService,
     public noSleep: NoSleepService,
@@ -67,7 +71,60 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   set useNetworkTime(value: boolean) {
     this.peakTimeService.useNetworkTime = value;
     this.timeService.setEnabled(value);
+    this.resetChart();
   }
+
+  get beatAdjuster(): number {
+    return this._beatAdjuster;
+  }
+  set beatAdjuster(value: number) {
+    if (this.targetBph === undefined)
+      this.targetBph = this._bph;
+    if (this.beatAdjustmentStartBpm === undefined)
+      this.beatAdjustmentStartBpm = this._bph;
+
+    this._beatAdjuster = value;
+    let beatAdjusterMax = 1000001;
+    let adjustmentProportion = 1 - (Math.log(beatAdjusterMax - Math.abs(value)) / Math.log(beatAdjusterMax));
+    if (value < 0)
+      adjustmentProportion = adjustmentProportion * -1;
+
+    let newBph = (this.beatAdjustmentStartBpm * adjustmentProportion / 400) + this.beatAdjustmentStartBpm;
+    this._bph = Math.round(newBph * 10000) / 10000;
+
+
+    let secondsDelta = ((this._bph / this.targetBph) - 1) * 24 * 60 * 60;
+    secondsDelta = Math.round(secondsDelta * 100) / 100;
+    let fastSlow = "";
+    if (secondsDelta > 0)
+      fastSlow = " fast";
+    else if (secondsDelta < 0)
+      fastSlow = " slow";
+    this.targetDelta = `${secondsDelta} seconds / day${fastSlow}.`;
+
+    //Using a timer to the amounts of UI updates as the slider slides
+    if (!this.beatAdjustmentUpdateDelayTimer || this.beatAdjustmentUpdateDelayTimer.closed)
+      this.beatAdjustmentUpdateDelayTimer = timer(100).subscribe(() => this.resetChart());
+  }
+  resetBeatAdjuster(): void {
+    this._beatAdjuster = 0;
+    this.beatAdjustmentStartBpm = undefined;
+  }
+
+
+  get bph(): number {
+    return this._bph;
+  }
+  set bph(bph: number) {
+    if (!bph || bph < 0)
+      return;
+
+    this.targetBph = undefined;
+    this._bph = bph;
+    this.resetChart();
+  }
+
+
 
 
   private startUpdateTimer(): void {
@@ -131,17 +188,10 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     this.configureChart();
   }
 
-  get bph(): number {
-    return this._bph;
-  }
-
-  set bph(bph: number) {
-    if (!bph || bph < 0)
-      return;
-
-    this._bph = bph;
+  private resetChart(): void {
     this.configureChart();
     this.peakTimeService.frameTimeSpanMs = this.getFrameTimeSpanMs();
+    this.displayTicks();
   }
 
   private getFrameTimeSpanMs(): number {
