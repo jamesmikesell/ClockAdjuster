@@ -29,10 +29,12 @@
     </div>
     <br>
     <mat-checkbox [(ngModel)]="useNetworkTime">Use Network Time</mat-checkbox>
-    <div *ngIf="useNetworkTime && timeService.estimatedDriftErrorSecondsPerDay">
+    <div [ngClass]="{'hidden-keep-space': !useNetworkTime || !timeService.estimatedDriftErrorSecondsPerDay}">
       <br>
-      System clock drifts at a rate of {{(timeService.driftRate * 60 * 60 * 24).toPrecision(3)}} seconds per day (+/-
-      {{timeService.estimatedDriftErrorSecondsPerDay.toPrecision(3)}})
+      System clock drifts at a rate of <span *ngIf="useNetworkTime && timeService.estimatedDriftErrorSecondsPerDay">
+        {{(timeService.driftRate * 60 * 60 * 24).toPrecision(3)}}</span> seconds per day (+/-
+      <span *ngIf="useNetworkTime && timeService.estimatedDriftErrorSecondsPerDay">
+        {{timeService.estimatedDriftErrorSecondsPerDay.toPrecision(3)}}</span>)
       <br>
       Note: While internally the system clock appears to be drifting at this rate, this drift will rarely be noticed
       day-to-day as the displayed system time is usually automatically updated.
@@ -62,7 +64,7 @@
       (pointerleave)="resetBeatAdjuster()" class="beat-adjuster">
     <br>
     <br>
-    <div *ngIf="targetBph">
+    <div [ngClass]="{'hidden-keep-space': !targetBph}">
       Target: {{targetBph}} BPH. <br>
       Actual: {{bph}} BPH. <br>
       Clock is {{targetDelta}}
