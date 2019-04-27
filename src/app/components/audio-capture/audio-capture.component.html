@@ -1,13 +1,15 @@
-<button mat-raised-button color="primary" (click)="start()">Start Capture</button>
-<button mat-raised-button (click)="pause()">Pause Capture</button>
-<button mat-raised-button (click)="reset()">Reset</button>
+<div class="top-controls">
+  <button mat-raised-button color="primary" (click)="start()">Start Capture</button>
+  <button mat-raised-button (click)="pause()">Pause Capture</button>
+  <button mat-raised-button (click)="reset()">Reset</button>
 
 
-<mat-form-field>
-  <mat-label>Beats Per Hour</mat-label>
-  <input matInput type="number" step="1" [(ngModel)]="bph">
-</mat-form-field>
-<mat-checkbox [(ngModel)]="noSleep.keepAwake">Keep Screen Awake</mat-checkbox>
+  <mat-form-field>
+    <mat-label>Beats Per Hour</mat-label>
+    <input matInput type="number" step="1" [(ngModel)]="bph">
+  </mat-form-field>
+  <mat-checkbox [(ngModel)]="noSleep.keepAwake">Keep Screen Awake</mat-checkbox>
+</div>
 <br>
 
 
