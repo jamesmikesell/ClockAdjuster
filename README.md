@@ -9,6 +9,17 @@ An [online version](https://jamesmikesell.github.io/ClockAdjuster/)  of the app 
 
 The graphed times will reveal if the clock is "out of beat", and if the clock is running fast or slow.  Additionally, since a computer or mobile device's internal clock can drift by several seconds per day, a network based (atomic) time source can be used to increase precision.
 
+Clock Adjuster features an audio filter spectrogram, which allows the clocks tick sound to be isolated from background noise:
+
+- Red line selecting the audio frequency where the clock sound is loudest
+
+   <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/filter-select.jpg" height="300">
+- Filter strength adjusted, note elimination of background noise:
+
+   <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/filtered.jpg" height="300">
+
+
+# Example Clock States
 - Clock running perfectly
 
    <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/in-beat.jpg" height="300">
