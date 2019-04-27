@@ -96,11 +96,11 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     let secondsDelta = ((this._bph / this.targetBph) - 1) * 24 * 60 * 60;
     secondsDelta = Math.round(secondsDelta * 100) / 100;
     let fastSlow = "";
-    if (secondsDelta > 0)
+    if (secondsDelta >= 0)
       fastSlow = " fast";
     else if (secondsDelta < 0)
       fastSlow = " slow";
-    this.targetDelta = `${secondsDelta} seconds / day${fastSlow}.`;
+    this.targetDelta = `${fastSlow} by ${Math.abs(secondsDelta)} seconds / day.`;
 
     //Using a timer to the amounts of UI updates as the slider slides
     if (!this.beatAdjustmentUpdateDelayTimer || this.beatAdjustmentUpdateDelayTimer.closed)

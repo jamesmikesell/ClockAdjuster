@@ -14,11 +14,10 @@ export class PeakTimeService {
   dbCutoff = 7;
   scrollPercentChange = new Subject<number>();
   tickTimes: number[] = [];
-  
+
   private scrolledToStartFrame: number;
   private _useNetworkTime = false;
   private _scrollPercent = 1;
-  private audioCaptureStartTime: number;
   private startingFrameIndex = 0;
   private dataEndTime: number;
 
@@ -53,16 +52,22 @@ export class PeakTimeService {
 
   clear(): void {
     this.tickTimes = [];
-    this.audioCaptureStartTime = undefined;
     this.startingFrameIndex = 0;
   }
 
+  private getPeak(frameSamples: Float32Array): number {
+    if (this.peakDetectionMethod === PeakDetectionMethod.maxPeak)
+      return this.signalProcessingService.getMaxPeakIndex(frameSamples);
+    else {
+      let averageRms = this.audioCaptureService.sampleQueue.getRms();
+      return this.signalProcessingService.getFirstPeakStartIndex(frameSamples, averageRms, this.dbCutoff);
+    }
+  }
 
   findTickTimes(): void {
     let sampleRateSeconds = this.audioCaptureService.getSampleRate();
     let sampleRateMs = sampleRateSeconds / 1000;
     let timeAndSamples = this.audioCaptureService.sampleQueue.getData();
-    let averageRms = this.audioCaptureService.sampleQueue.getRms();
     let dataEndTime = timeAndSamples[0];
     let samples = timeAndSamples[1];
 
@@ -70,11 +75,10 @@ export class PeakTimeService {
       return;
 
     if (!this.tickTimes.length) {
-      let firstPeakIndex = this.signalProcessingService.getMaxPeakIndex(samples);
+      let firstPeakIndex = this.getPeak(samples);
       if (firstPeakIndex !== undefined) {
         let firstPeakStartTime = dataEndTime - ((samples.length - firstPeakIndex - 1) / sampleRateMs);
         this.tickTimes.push(firstPeakStartTime);
-        this.audioCaptureStartTime = dataEndTime - ((samples.length - 1) / sampleRateMs);
         this.startingFrameIndex = 1;
       } else {
         return;
@@ -85,8 +89,9 @@ export class PeakTimeService {
 
     //Find peak in each frame
     while (true) {
-      let frameStartTime = this.startingFrameIndex * this.frameTimeSpanMs + this.audioCaptureStartTime;
+      let frameStartTime = this.startingFrameIndex * this.frameTimeSpanMs + this.tickTimes[0] - (this.frameTimeSpanMs / 2);
       let sampleStartIndex = Math.round(samples.length - 1 - ((dataEndTime - frameStartTime) * sampleRateMs));
+      sampleStartIndex = sampleStartIndex < 0 ? 0 : sampleStartIndex;
       let sampleEndIndex = Math.round(sampleStartIndex + (this.frameTimeSpanMs * sampleRateMs));
 
       //Break if we're analyzing the last 200 ms of sample data (we don't want to analyze a peak that potentially isn't finished peaking)
@@ -94,12 +99,7 @@ export class PeakTimeService {
         break;
 
       let frameSamples = samples.slice(sampleStartIndex, sampleEndIndex);
-      let peakStartIndex;
-      if (this.peakDetectionMethod === PeakDetectionMethod.maxPeak)
-        peakStartIndex = this.signalProcessingService.getMaxPeakIndex(frameSamples);
-      else {
-        peakStartIndex = this.signalProcessingService.getFirstPeakStartIndex(frameSamples, averageRms, this.dbCutoff);
-      }
+      let peakStartIndex = this.getPeak(frameSamples);
 
       if (peakStartIndex !== undefined) {
         let peakMsIntoFrame = peakStartIndex / sampleRateMs;
@@ -167,7 +167,7 @@ export class PeakTimeService {
       for (let i = 0; i < this.tickTimes.length; i++) {
         const tickTime = this.tickTimes[i];
         let tickTimeSinceFirstTick = tickTime - firstTickTime;
-        if (this._useNetworkTime && this.timeService.driftRate) 
+        if (this._useNetworkTime && this.timeService.driftRate)
           tickTimeSinceFirstTick = (this.timeService.driftRate * tickTimeSinceFirstTick) + tickTimeSinceFirstTick;
 
         let frameIndex = Math.round(tickTimeSinceFirstTick / frameTimeSpan) - startingFrameIndex;

@@ -28,15 +28,22 @@ export class SignalProcessingService {
     let bufferLength = sample.length;
 
     let value: number;
-    let maxValue = 0;
-    let maxIndex = 0;
+    let maxValue = Number.MIN_VALUE;
+    let minValue = Number.MAX_VALUE;
+    let maxIndex: number;
     for (let i = 0; i < bufferLength; i++) {
       value = Math.abs(sample[i]);
+      if (value < minValue)
+        minValue = value;
+
       if (value > maxValue) {
         maxIndex = i;
         maxValue = value;
       }
     }
+
+    if (maxValue === minValue)
+      return undefined;
 
     return maxIndex;
   }
