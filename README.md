@@ -1,27 +1,29 @@
-# ClockAdjuster
+# Try The App
+An [online version](https://jamesmikesell.github.io/ClockAdjuster/)  of the app is available for use on both mobile and desktop use.
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.1.2.
+# Clock Adjuster
 
-## Development server
+[Clock Adjuster](https://jamesmikesell.github.io/ClockAdjuster/)  is an app for tuning mechanical time pieces.  Clock Adjuster uses a computer or mobile device's microphone to listen for a clocks ticks and tocks, and then displays their timing graphically.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+The graphed times will reveal if the clock is "out of beat", and if the clock is running fast or slow.  Additionally, since a computer or mobile device's internal clock can drift by several seconds per day, a network based (atomic) time source can be used to increase precision.
 
-## Code scaffolding
+Clock Adjuster features an audio filter spectrogram, which allows the clocks tick sound to be isolated from background noise:
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- Red line selecting the audio frequency where the clock sound is loudest
 
-## Build
+   <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/filter-select.jpg" height="300">
+- Filter strength adjusted, note elimination of background noise:
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+   <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/filtered.jpg" height="300">
 
-## Running unit tests
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+# Example Clock States
+- Clock running perfectly
 
-## Running end-to-end tests
+   <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/in-beat.jpg" height="300">
+- Out of beat clock
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+   <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/out-of-beat.jpg" height="300">
+- Clock running fast
 
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+   <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/fast.jpg" height="300">
