@@ -29,6 +29,8 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   private _beatAdjuster = 0;
   private beatAdjustmentStartBpm: number;
   private beatAdjustmentUpdateDelayTimer: Subscription;
+  private _chartScrollerDown = false;
+  private _beatAdjusterDown = false;
 
   constructor(public audioCaptureService: AudioCaptureService,
     public noSleep: NoSleepService,
@@ -38,7 +40,10 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.peakTimeService.maxFramesToDisplay = this.getMaxFramesToDisplay();
     this.peakTimeService.frameTimeSpanMs = this.getFrameTimeSpanMs();
-    this.peakTimeService.scrollPercentChange.subscribe(percent => this.scrollValue = percent * this.scrollMax);
+    this.peakTimeService.scrollPercentChange.subscribe(percent => {
+      if (!this._chartScrollerDown)
+        this.scrollValue = percent * this.scrollMax;
+    });
   }
 
   ngOnDestroy(): void {
@@ -107,13 +112,18 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
       this.beatAdjustmentUpdateDelayTimer = timer(100).subscribe(() => this.resetChart());
   }
 
-  resetBeatAdjuster(): void {
+  beatAdjusterUp(): void {
+    this._beatAdjusterDown = false;
     timer(100).toPromise().then(() => {
-      this._beatAdjuster = 0;
-      this.beatAdjustmentStartBpm = undefined;
+      if (!this._beatAdjusterDown) {
+        this._beatAdjuster = 0;
+        this.beatAdjustmentStartBpm = undefined;
+      }
     });
   }
-
+  beatAdjusterDown(): void {
+    this._beatAdjusterDown = true;
+  }
 
   get bph(): number {
     return this._bph;
@@ -265,6 +275,17 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     this.peakTimeService.scrollPercent = this.scrollValue / this.scrollMax;
 
     this.displayTicks();
+  }
+
+  chartScrollerUp(): void {
+    this._chartScrollerDown = false;
+    timer(100).toPromise().then(() => {
+      if (!this._chartScrollerDown)
+        this.scrollValue = this.peakTimeService.scrollPercent * this.scrollMax;
+    });
+  }
+  chartScrollerDown(): void {
+    this._chartScrollerDown = true;
   }
 
   private displayTicks(): void {
