@@ -52,11 +52,12 @@ export class AudioCaptureService {
   start(): Promise<void> {
     if (!this.audioContext) {
 
-      this.audioContext = new AudioContext();
+      this.audioContext = new AudioContext({ latencyHint: "playback" });
 
       let config: MediaStreamConstraints = {
         "audio": {
-          echoCancellation: false
+          echoCancellation: false,
+
         },
       };
 
@@ -107,7 +108,8 @@ export class AudioCaptureService {
     this.filterBandPass.frequency.value = 1;
     this.filterBandPass.Q.value = 0;
 
-    this.processor = this.audioContext.createScriptProcessor(Math.pow(2, 12));
+    //Math.pow(2, 12)
+    this.processor = this.audioContext.createScriptProcessor();
     this.processor.onaudioprocess = (event) => this.audioProcess(event);
     this.filterBandPass.connect(this.processor);
     this.processor.connect(this.audioContext.destination);
