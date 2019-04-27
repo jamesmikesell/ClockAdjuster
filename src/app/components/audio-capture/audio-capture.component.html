@@ -64,7 +64,8 @@
       </div>
       <br>
       <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (pointerup)="beatAdjusterUp()"
-        (pointerdown)="beatAdjusterDown()" (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
+        (blur)="beatAdjusterUp()" (mouseup)="beatAdjusterUp()" (pointerdown)="beatAdjusterDown()"
+        (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
       </mat-slider>
       <br>
       <br>
