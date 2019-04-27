@@ -108,7 +108,6 @@ export class AudioCaptureService {
     this.filterBandPass.frequency.value = 1;
     this.filterBandPass.Q.value = 0;
 
-    //Math.pow(2, 12)
     this.processor = this.audioContext.createScriptProcessor();
     this.processor.onaudioprocess = (event) => this.audioProcess(event);
     this.filterBandPass.connect(this.processor);
