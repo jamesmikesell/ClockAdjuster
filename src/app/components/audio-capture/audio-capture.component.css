@@ -27,3 +27,7 @@
   margin-left: 15px;
   margin-right: 15px;
 }
+
+.control-container {
+  max-width: 750px;
+}

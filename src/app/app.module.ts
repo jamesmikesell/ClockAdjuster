@@ -10,6 +10,7 @@ import { SpectrogramComponent } from './components/spectrogram/spectrogram.compo
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSliderModule, MatButtonModule, MatInputModule, MatExpansionModule, MatCheckboxModule, MatSelectModule } from '@angular/material';
 import { HttpClientModule } from '@angular/common/http';
+import { FlexLayoutModule } from '@angular/flex-layout';
 
 @NgModule({
   declarations: [
@@ -29,6 +30,7 @@ import { HttpClientModule } from '@angular/common/http';
     MatExpansionModule,
     MatCheckboxModule,
     MatSelectModule,
+    FlexLayoutModule,
     MatSliderModule
   ],
   providers: [],

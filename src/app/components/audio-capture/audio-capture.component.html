@@ -1,118 +1,124 @@
-<div class="top-controls">
-  <button mat-raised-button color="primary" (click)="start()">Start Capture</button>
-  <button mat-raised-button (click)="pause()">Pause Capture</button>
-  <button mat-raised-button (click)="reset()">Reset</button>
+<div class="control-container">
+  <div class="top-controls" fxLayout="row wrap" fxLayoutAlign="space-around center">
+    <button mat-raised-button color="primary" (click)="start()">Start Capture</button>
+    <button mat-raised-button (click)="pause()">Pause Capture</button>
+    <button mat-raised-button (click)="reset()">Reset</button>
 
 
-  <mat-form-field>
-    <mat-label>Beats Per Hour</mat-label>
-    <input matInput type="number" step="1" [(ngModel)]="bph">
-  </mat-form-field>
-  <mat-checkbox [(ngModel)]="noSleep.keepAwake">Keep Screen Awake</mat-checkbox>
+    <mat-form-field>
+      <mat-label>Beats Per Hour</mat-label>
+      <input matInput type="number" step="1" [(ngModel)]="bph">
+    </mat-form-field>
+    <mat-checkbox [(ngModel)]="noSleep.keepAwake">Keep Screen Awake</mat-checkbox>
+  </div>
+  <br>
+
+
+
+  <mat-accordion>
+    <mat-expansion-panel #spectrographParent>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Network Time Compensation {{getNetworkTimeStatus()}}
+        </mat-panel-title>
+        <mat-panel-description>
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div>
+        Compensates the local system clock against an internet based atomic time source. However, note that due to
+        network
+        limitations, over short periods of times (less than 30 minutes) enabling this option can actually be less
+        accurate
+        than the native system clock. Network time is checked every 10 minutes.
+      </div>
+      <br>
+      <mat-checkbox [(ngModel)]="useNetworkTime">Use Network Time</mat-checkbox>
+      <div [ngClass]="{'hidden-keep-space': !useNetworkTime || !timeService.estimatedDriftErrorSecondsPerDay}">
+        <br>
+        System clock drifts by {{((timeService.driftRate || 0) * 60 * 60 * 24).toPrecision(3)}} sec/day
+        (&plusmn;{{(timeService.estimatedDriftErrorSecondsPerDay || 0).toPrecision(3)}}).
+        <br>
+        Note: While internally the system clock appears to be drifting at this rate, this drift will rarely be noticed
+        day-to-day as the displayed system time is usually automatically updated.
+      </div>
+    </mat-expansion-panel>
+
+
+
+
+
+    <mat-expansion-panel #spectrographParent>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Fine Tuning
+        </mat-panel-title>
+        <mat-panel-description>
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+
+      <div>
+        Use this to estimate the actual BPH of the clock. Set the "Beats Per Hour" input above to the clock's expected
+        BPH. Next, move the slider left/right until the graphed ticks are perfectly horizontal.
+      </div>
+      <br>
+      <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (pointerup)="beatAdjusterUp()"
+        (pointerdown)="beatAdjusterDown()" (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
+      </mat-slider>
+      <br>
+      <br>
+      <div [ngClass]="{'hidden-keep-space': !targetBph}">
+        Target: {{targetBph}} BPH. <br>
+        Actual: {{bph}} BPH. <br>
+        Clock is {{targetDelta}}
+      </div>
+    </mat-expansion-panel>
+
+
+
+
+
+    <mat-expansion-panel #spectrographParent>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Audio Filter {{audioCaptureService.getBandWidth() ? '[Enabled]' : ''}}
+        </mat-panel-title>
+        <mat-panel-description>
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <mat-form-field>
+        <mat-label>Filtered Frequency</mat-label>
+        <input matInput type="number" step="1" [ngModel]="audioCaptureService.getFrequency()"
+          (ngModelChange)="audioCaptureService.setFrequency($event)" min="1" max="22049">
+      </mat-form-field>
+
+      Filter Strength <mat-slider min="0" max="400" [ngModel]="audioCaptureService.getBandWidth()"
+        (input)="audioCaptureService.setBandWidth($event.value)"></mat-slider>
+
+      <mat-form-field>
+        <mat-label>Peak Detection Method</mat-label>
+        <mat-select [(value)]="peakTimeService.peakDetectionMethod">
+          <mat-option [value]="PeakDetectionMethod.firstPeak">Time of First Peak Above Average</mat-option>
+          <mat-option [value]="PeakDetectionMethod.maxPeak">Time of Max Peak</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+
+      <mat-form-field *ngIf="peakTimeService.peakDetectionMethod === PeakDetectionMethod.firstPeak">
+        <mat-label>DB Cutoff</mat-label>
+        <input matInput type="number" step="1" [(ngModel)]="peakTimeService.dbCutoff" min="1" max="100">
+      </mat-form-field>
+
+      <br>
+
+      <app-spectrogram *ngIf="spectrographParent.expanded"></app-spectrogram>
+    </mat-expansion-panel>
+  </mat-accordion>
 </div>
-<br>
 
 
-
-<mat-accordion>
-  <mat-expansion-panel #spectrographParent>
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        Network Time Compensation {{getNetworkTimeStatus()}}
-      </mat-panel-title>
-      <mat-panel-description>
-      </mat-panel-description>
-    </mat-expansion-panel-header>
-
-    <div>
-      Compensates the local system clock against an internet based atomic time source. However, note that due to network
-      limitations, over short periods of times (less than 30 minutes) enabling this option can actually be less accurate
-      than the native system clock. Network time is checked every 10 minutes.
-    </div>
-    <br>
-    <mat-checkbox [(ngModel)]="useNetworkTime">Use Network Time</mat-checkbox>
-    <div [ngClass]="{'hidden-keep-space': !useNetworkTime || !timeService.estimatedDriftErrorSecondsPerDay}">
-      <br>
-      System clock drifts by {{((timeService.driftRate || 0) * 60 * 60 * 24).toPrecision(3)}} sec/day
-      (&plusmn;{{(timeService.estimatedDriftErrorSecondsPerDay || 0).toPrecision(3)}}).
-      <br>
-      Note: While internally the system clock appears to be drifting at this rate, this drift will rarely be noticed
-      day-to-day as the displayed system time is usually automatically updated.
-    </div>
-  </mat-expansion-panel>
-
-
-
-
-
-  <mat-expansion-panel #spectrographParent>
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        Fine Tuning
-      </mat-panel-title>
-      <mat-panel-description>
-      </mat-panel-description>
-    </mat-expansion-panel-header>
-
-
-    <div>
-      Use this to estimate the actual BPH of the clock. Set the "Beats Per Hour" input above to the clock's expected
-      BPH. Next, move the slider left/right until the graphed ticks are perfectly horizontal.
-    </div>
-    <br>
-    <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (pointerup)="beatAdjusterUp()"
-      (pointerdown)="beatAdjusterDown()" (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
-    </mat-slider>
-    <br>
-    <br>
-    <div [ngClass]="{'hidden-keep-space': !targetBph}">
-      Target: {{targetBph}} BPH. <br>
-      Actual: {{bph}} BPH. <br>
-      Clock is {{targetDelta}}
-    </div>
-  </mat-expansion-panel>
-
-
-
-
-
-  <mat-expansion-panel #spectrographParent>
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        Audio Filter {{audioCaptureService.getBandWidth() ? '[Enabled]' : ''}}
-      </mat-panel-title>
-      <mat-panel-description>
-      </mat-panel-description>
-    </mat-expansion-panel-header>
-
-    <mat-form-field>
-      <mat-label>Filtered Frequency</mat-label>
-      <input matInput type="number" step="1" [ngModel]="audioCaptureService.getFrequency()"
-        (ngModelChange)="audioCaptureService.setFrequency($event)" min="1" max="22049">
-    </mat-form-field>
-
-    Filter Strength <mat-slider min="0" max="400" [ngModel]="audioCaptureService.getBandWidth()"
-      (input)="audioCaptureService.setBandWidth($event.value)"></mat-slider>
-
-    <mat-form-field>
-      <mat-label>Peak Detection Method</mat-label>
-      <mat-select [(value)]="peakTimeService.peakDetectionMethod">
-        <mat-option [value]="PeakDetectionMethod.firstPeak">Time of First Peak Above Average</mat-option>
-        <mat-option [value]="PeakDetectionMethod.maxPeak">Time of Max Peak</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-
-    <mat-form-field *ngIf="peakTimeService.peakDetectionMethod === PeakDetectionMethod.firstPeak">
-      <mat-label>DB Cutoff</mat-label>
-      <input matInput type="number" step="1" [(ngModel)]="peakTimeService.dbCutoff" min="1" max="100">
-    </mat-form-field>
-
-    <br>
-
-    <app-spectrogram *ngIf="spectrographParent.expanded"></app-spectrogram>
-  </mat-expansion-panel>
-</mat-accordion>
 
 <br>
 Running Time: <span *ngIf="runningTime">{{runningTime}}</span>
