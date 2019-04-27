@@ -1,0 +1,19 @@
+{
+  "short_name": "Clock Adjuster",
+  "name": "Clock Adjuster",
+  "icons": [{
+      "src": "/ClockAdjuster/assets/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/ClockAdjuster/assets/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/ClockAdjuster/index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#2196F3"
+}

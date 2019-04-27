@@ -5,5 +5,8 @@
         "datasets",
         "highpass",
         "nosleep"
-    ]
+    ],
+    "search.exclude": {
+        "**/docs": true
+    }
 }
