@@ -33,10 +33,8 @@
     <mat-checkbox [(ngModel)]="useNetworkTime">Use Network Time</mat-checkbox>
     <div [ngClass]="{'hidden-keep-space': !useNetworkTime || !timeService.estimatedDriftErrorSecondsPerDay}">
       <br>
-      System clock drifts at a rate of <span *ngIf="useNetworkTime && timeService.estimatedDriftErrorSecondsPerDay">
-        {{(timeService.driftRate * 60 * 60 * 24).toPrecision(3)}}</span> seconds per day (+/-
-      <span *ngIf="useNetworkTime && timeService.estimatedDriftErrorSecondsPerDay">
-        {{timeService.estimatedDriftErrorSecondsPerDay.toPrecision(3)}}</span>)
+      System clock drifts by {{((timeService.driftRate || 0) * 60 * 60 * 24).toPrecision(3)}} sec/day
+      (&plusmn;{{(timeService.estimatedDriftErrorSecondsPerDay || 0).toPrecision(3)}}).
       <br>
       Note: While internally the system clock appears to be drifting at this rate, this drift will rarely be noticed
       day-to-day as the displayed system time is usually automatically updated.
@@ -62,8 +60,8 @@
       BPH. Next, move the slider left/right until the graphed ticks are perfectly horizontal.
     </div>
     <br>
-    <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (pointerup)="resetBeatAdjuster()"
-      (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
+    <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (pointerup)="beatAdjusterUp()"
+      (pointerdown)="beatAdjusterDown()" (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
     </mat-slider>
     <br>
     <br>
@@ -124,7 +122,9 @@ Running Time: <span *ngIf="runningTime">{{runningTime}}</span>
 <div *ngIf="chartOptions" style="display: block;" class="chart-container">
   <canvas baseChart width="400" height="400" [data]="lineData" [labels]="labelData" [chartType]="'line'"
     [options]="chartOptions"></canvas>
-  <input type="range" [min]="0" [max]="1000000" [(ngModel)]="scroll" class="chart-scroller">
+
+  <mat-slider class="chart-scroller" [min]="0" [max]="1000000" (pointerup)="chartScrollerUp()"
+    (pointerdown)="chartScrollerDown()" (input)="scroll = $event.value" [(ngModel)]="scroll"></mat-slider>
 </div>
 
 
