@@ -106,6 +106,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     if (!this.beatAdjustmentUpdateDelayTimer || this.beatAdjustmentUpdateDelayTimer.closed)
       this.beatAdjustmentUpdateDelayTimer = timer(100).subscribe(() => this.resetChart());
   }
+
   resetBeatAdjuster(): void {
     this._beatAdjuster = 0;
     this.beatAdjustmentStartBpm = undefined;
