@@ -108,8 +108,10 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   }
 
   resetBeatAdjuster(): void {
-    this._beatAdjuster = 0;
-    this.beatAdjustmentStartBpm = undefined;
+    timer(100).toPromise().then(() => {
+      this._beatAdjuster = 0;
+      this.beatAdjustmentStartBpm = undefined;
+    });
   }
 
 

@@ -60,8 +60,9 @@
       BPH. Next, move the slider left/right until the graphed ticks are perfectly horizontal.
     </div>
     <br>
-    <input type="range" [min]="-1000000" [max]="1000000" [(ngModel)]="beatAdjuster" (pointerup)="resetBeatAdjuster()"
-      (mouseup)="resetBeatAdjuster()" class="beat-adjuster">
+    <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (pointerup)="resetBeatAdjuster()"
+      (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
+    </mat-slider>
     <br>
     <br>
     <div [ngClass]="{'hidden-keep-space': !targetBph}">
