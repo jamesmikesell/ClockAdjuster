@@ -1,9 +1,9 @@
 # Clock Adjuster
 
-# Try The App
+## Try The App
 An [online version](https://jamesmikesell.github.io/ClockAdjuster/)  of the app is available for use on both mobile and desktop use.
 
-# Clock Adjuster
+## Clock Adjuster Explained
 
 [Clock Adjuster](https://jamesmikesell.github.io/ClockAdjuster/)  is an app for tuning mechanical time pieces.  Clock Adjuster uses a computer or mobile device's microphone to listen for a clocks ticks and tocks, and then displays their timing graphically.
 
@@ -19,7 +19,7 @@ Clock Adjuster features an audio filter spectrogram, which allows the clocks tic
    <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/filtered.jpg" height="300">
 
 
-# Example Clock States
+## Example Clock States
 - Clock running perfectly
 
    <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/in-beat.jpg" height="300">
