@@ -40,10 +40,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.peakTimeService.maxFramesToDisplay = this.getMaxFramesToDisplay();
     this.peakTimeService.frameTimeSpanMs = this.getFrameTimeSpanMs();
-    this.peakTimeService.scrollPercentChange.subscribe(percent => {
-      if (!this._chartScrollerDown)
-        this.scrollValue = percent * this.scrollMax;
-    });
+    this.peakTimeService.scrollPercentChange.subscribe(() => this.tryUpdateScrollerPosition());
   }
 
   ngOnDestroy(): void {
@@ -52,6 +49,25 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
     this.audioCaptureService.stop();
   }
+
+
+  @HostListener('window:pointerup', ['$event'])
+  onPointerUp(event: any): void {
+    this._beatAdjusterDown = false;
+    this._chartScrollerDown = false;
+
+    timer(100).toPromise().then(() => {
+      this.tryResetBeatAdjuster();
+      this.tryUpdateScrollerPosition();
+    });
+  }
+
+  @HostListener('window:resize', ['$event'])
+  windowResize(): void {
+    this.peakTimeService.maxFramesToDisplay = this.getMaxFramesToDisplay();
+    this.displayTicks();
+  }
+
 
   getVersion(): string {
     return environment.version;
@@ -112,15 +128,6 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
       this.beatAdjustmentUpdateDelayTimer = timer(100).subscribe(() => this.resetChart());
   }
 
-  beatAdjusterUp(): void {
-    this._beatAdjusterDown = false;
-    timer(100).toPromise().then(() => {
-      if (!this._beatAdjusterDown) {
-        this._beatAdjuster = 0;
-        this.beatAdjustmentStartBpm = undefined;
-      }
-    });
-  }
   beatAdjusterDown(): void {
     this._beatAdjusterDown = true;
   }
@@ -138,7 +145,12 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   }
 
 
-
+  private tryResetBeatAdjuster(): void {
+    if (!this._beatAdjusterDown) {
+      this._beatAdjuster = 0;
+      this.beatAdjustmentStartBpm = undefined;
+    }
+  }
 
   private startUpdateTimer(): void {
     this.periodicUpdate = timer(1000, 100).subscribe(() => {
@@ -257,12 +269,6 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     this.displayTicks();
   }
 
-  @HostListener('window:resize', ['$event'])
-  windowResize(): void {
-    this.peakTimeService.maxFramesToDisplay = this.getMaxFramesToDisplay();
-    this.displayTicks();
-  }
-
   private getMaxFramesToDisplay(): number {
     let chartMargins = 50;
     let maxPointsPerPixel = 150 / 1000;
@@ -277,15 +283,13 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     this.displayTicks();
   }
 
-  chartScrollerUp(): void {
-    this._chartScrollerDown = false;
-    timer(100).toPromise().then(() => {
-      if (!this._chartScrollerDown)
-        this.scrollValue = this.peakTimeService.scrollPercent * this.scrollMax;
-    });
-  }
   chartScrollerDown(): void {
     this._chartScrollerDown = true;
+  }
+
+  private tryUpdateScrollerPosition(): void {
+    if (!this._chartScrollerDown)
+      this.scrollValue = this.peakTimeService.scrollPercent * this.scrollMax;
   }
 
   private displayTicks(): void {
