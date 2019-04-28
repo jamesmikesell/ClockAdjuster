@@ -22,9 +22,9 @@ Clock Adjuster features an audio filter spectrogram which allows a clock's ticki
 - Clock running perfectly
 
    <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/in-beat.jpg" height="300">
-- Out of beat clock. Tocks are 50ms later than tick (Clock rhythm would sound like tick..tock........tick..tock........tick..tock  instead of tick.....tock.....tick.....tock.....tick.....tock)
+- Out of beat clock. Tocks are 50ms later than tick (clock rhythm would sound like tick..tock........tick..tock........tick..tock  instead of tick.....tock.....tick.....tock.....tick.....tock)
 
    <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/out-of-beat.jpg" height="300">
-- Clock running fast
+- Clock running fast by 100ms per 15.09 seconds
 
    <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/fast.jpg" height="300">
