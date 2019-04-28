@@ -63,16 +63,14 @@
         BPH. Next, move the slider left/right until the graphed ticks are perfectly horizontal.
       </div>
       <br>
-      <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (pointerup)="onPointerUp()"
-        (pointerdown)="beatAdjusterDown()" (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
-      </mat-slider>
-      <br>
-      <br>
       <div [ngClass]="{'hidden-keep-space': !targetBph}">
         Target: {{targetBph}} BPH. <br>
         Actual: {{bph}} BPH. <br>
         Clock is {{targetDelta}}
       </div>
+      <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (pointerup)="onPointerUp()"
+        (pointerdown)="beatAdjusterDown()" (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
+      </mat-slider>
     </mat-expansion-panel>
 
 
@@ -88,20 +86,30 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
 
+      Click on the area of the graph below where the clock's ticking sound is most intense, then adjust the "Filter
+      Strength" slider to limit background noise.
+      <br>
+      <br>
+
       <mat-form-field>
         <mat-label>Filtered Frequency</mat-label>
         <input matInput type="number" step="1" [ngModel]="audioCaptureService.getFrequency()"
           (ngModelChange)="audioCaptureService.setFrequency($event)" min="1" max="22049">
       </mat-form-field>
 
-      Filter Strength <mat-slider min="0" max="400" [ngModel]="audioCaptureService.getBandWidth()"
-        (input)="audioCaptureService.setBandWidth($event.value)"></mat-slider>
+      <div>
+        <div class="mat-small">
+          Filter Strength
+        </div>
+        <mat-slider id="filter-strength" min="0" max="400" [ngModel]="audioCaptureService.getBandWidth()"
+          (input)="audioCaptureService.setBandWidth($event.value)"></mat-slider>
+      </div>
 
       <mat-form-field>
-        <mat-label>Peak Detection Method</mat-label>
+        <mat-label>Tick Sound Detection Method</mat-label>
         <mat-select [(value)]="peakTimeService.peakDetectionMethod">
-          <mat-option [value]="PeakDetectionMethod.firstPeak">Time of First Peak Above Average</mat-option>
-          <mat-option [value]="PeakDetectionMethod.maxPeak">Time of Max Peak</mat-option>
+          <mat-option [value]="PeakDetectionMethod.firstPeak">Time of First Sound Level Above Average</mat-option>
+          <mat-option [value]="PeakDetectionMethod.maxPeak">Time of Max Sound Level</mat-option>
         </mat-select>
       </mat-form-field>
 
