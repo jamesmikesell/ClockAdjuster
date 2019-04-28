@@ -63,9 +63,8 @@
         BPH. Next, move the slider left/right until the graphed ticks are perfectly horizontal.
       </div>
       <br>
-      <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (pointerup)="beatAdjusterUp()"
-        (blur)="beatAdjusterUp()" (mouseup)="beatAdjusterUp()" (pointerdown)="beatAdjusterDown()"
-        (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
+      <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (pointerup)="onPointerUp()"
+        (pointerdown)="beatAdjusterDown()" (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
       </mat-slider>
       <br>
       <br>
@@ -130,7 +129,7 @@ Running Time: <span *ngIf="runningTime">{{runningTime}}</span>
   <canvas baseChart width="400" height="400" [data]="lineData" [labels]="labelData" [chartType]="'line'"
     [options]="chartOptions"></canvas>
 
-  <mat-slider class="chart-scroller" [min]="0" [max]="1000000" (pointerup)="chartScrollerUp()"
+  <mat-slider class="chart-scroller" [min]="0" [max]="1000000" (pointerup)="onPointerUp()"
     (pointerdown)="chartScrollerDown()" (input)="scroll = $event.value" [(ngModel)]="scroll"></mat-slider>
 </div>
 
