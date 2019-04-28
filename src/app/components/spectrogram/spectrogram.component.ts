@@ -17,12 +17,14 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
   private graphCtx: CanvasRenderingContext2D;
   private lineCtx: CanvasRenderingContext2D;
   private run = true;
-  private colors = new Map<number, string>();
+  private intensityShadeMap = new Map<number, string>();
   private clickY = 0;
   private clickTime: number;
   private frequencyBinCount: number;
 
   private _graphIsLog = false;
+  private _colorGraph = true;
+  private _logIntensity = true;
 
 
   constructor(private audioCaptureService: AudioCaptureService) { }
@@ -78,11 +80,28 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
   get graphIsLog(): boolean {
     return this._graphIsLog;
   }
-
   set graphIsLog(value: boolean) {
     this._graphIsLog = value;
     this.configFFTSize();
   }
+
+  get colorGraph(): boolean {
+    return this._colorGraph;
+  }
+  set colorGraph(value: boolean) {
+    this._colorGraph = value;
+    this._logIntensity = value;
+    this.intensityShadeMap.clear();
+  }
+
+  get logIntensity(): boolean {
+    return this._logIntensity;
+  }
+  set logIntensity(value: boolean) {
+    this._logIntensity = value;
+    this.intensityShadeMap.clear();
+  }
+
 
   private configFFTSize(): void {
     if (this._graphIsLog)
@@ -120,14 +139,14 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
     this.frequencyBinCount = frequencies.length;
 
     if (this.graphIsLog)
-      this.graphLogarithmic(width, height, frequencies);
+      this.graphLogarithmicScale(width, height, frequencies);
     else
-      this.graphLinear(width, height, frequencies);
+      this.graphLinearScale(width, height, frequencies);
   }
 
 
 
-  private graphLinear(width: number, height: number, frequencies: Uint8Array): void {
+  private graphLinearScale(width: number, height: number, frequencies: Uint8Array): void {
     let frequencyBinCount = frequencies.length;
 
     let barHeight = height / frequencyBinCount;
@@ -135,13 +154,13 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
     for (let i = 0; i < frequencyBinCount; i++) {
       let value = frequencies[i];
 
-      this.graphCtx.fillStyle = this.getGraphColor(value);
+      this.graphCtx.fillStyle = this.getGraphShade(value);
       this.graphCtx.fillRect(width - this.speed, height - (i * barHeight), this.speed, barHeight);
     }
   }
 
 
-  private graphLogarithmic(width: number, height: number, frequencies: Uint8Array): void {
+  private graphLogarithmicScale(width: number, height: number, frequencies: Uint8Array): void {
     let frequencyBinCount = frequencies.length;
 
     let logMax = Math.log(frequencyBinCount + 1);
@@ -174,23 +193,35 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
       let existingHeightMep = locationMap.get(yLocation);
       Array.from(existingHeightMep.keys()).sort((a, b) => a - b).forEach(sectionHeight => {
         let value = existingHeightMep.get(sectionHeight);
-        this.graphCtx.fillStyle = this.getGraphColor(value);
+        this.graphCtx.fillStyle = this.getGraphShade(value);
         this.graphCtx.fillRect(width - this.speed, yLocation, this.speed, sectionHeight);
       });
     });
   }
 
-  private getGraphColor(value: number): string {
-    let existing = this.colors.get(value);
+  private getGraphShade(value: number): string {
+    let existing = this.intensityShadeMap.get(value);
     if (existing)
       return existing;
 
-    let i = 255 - value;
-    let string = `rgb(${i}, ${i}, ${i})`;
-    this.colors.set(value, string);
+    let percent: number;
+    if (this._logIntensity)
+      percent = Math.log(value + 1) / Math.log(256);
+    else
+      percent = value / 255;
+
+    let string: string;
+    if (this._colorGraph) {
+      string = `hsla(${-percent * 240 + 240}, 100%, 50%, 1)`;
+    } else {
+      let minLum = .259;
+      let lum = ((1 - minLum) * (percent)) + minLum;
+      string = `hsla(0, 0%, ${lum * 100}%, 1)`;
+    }
+
+    this.intensityShadeMap.set(value, string);
     return string;
   }
-
 
   private drawSelectionLine(): void {
     if (this.clickTime) {
