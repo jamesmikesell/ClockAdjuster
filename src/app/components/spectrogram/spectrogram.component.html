@@ -1,4 +1,6 @@
-<mat-checkbox [(ngModel)]="graphIsLog">Logarithmic Graph</mat-checkbox> <br>
+<mat-checkbox [(ngModel)]="colorGraph">Color Graph</mat-checkbox> <br>
+<mat-checkbox [(ngModel)]="logIntensity">Logarithmic Intensity</mat-checkbox> <br>
+<mat-checkbox [(ngModel)]="graphIsLog">Logarithmic Graph Scale</mat-checkbox> <br>
 
 <canvas #canvas width="400" height="400" (pointerdown)="dragging=true; mouseMove($event)"
   (pointermove)="mouseMove($event)" (pointerup)="dragging=false" (pointerleave)="dragging=false"

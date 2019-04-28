@@ -4,6 +4,7 @@
         "bandpass",
         "datasets",
         "highpass",
+        "hsla",
         "nosleep"
     ],
     "search.exclude": {
