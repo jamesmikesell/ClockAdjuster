@@ -52,7 +52,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
 
   @HostListener('window:pointerup', ['$event'])
-  onPointerUp(event: any): void {
+  onPointerUp(): void {
     this._beatAdjusterDown = false;
     this._chartScrollerDown = false;
 
