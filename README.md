@@ -12,24 +12,24 @@ Clock Adjuster features an audio filter spectrogram which allows a clock's ticki
 # Audio Frequency Isolation
 - Red line selecting the audio frequency where the clock sound is loudest
 
-   <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/filter-select.jpg" height="300">
+   <kbd><img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/filter-select.jpg" height="300"></kbd>
 - Filter strength adjusted, note elimination of background noise:
 
-   <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/filtered.jpg" height="300">
+   <kbd><img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/filtered.jpg" height="300"></kbd>
 
 
 # Example Clock States
 - **Clock Running Perfectly**
 
-   <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/in-beat.jpg" border="10" height="300">
+   <kbd><img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/in-beat.jpg" height="300"></kbd>
 - **Clock Out of Beat** 
 
-   <kbd><img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/out-of-beat.jpg" height="300"><kbd>
+   <kbd><img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/out-of-beat.jpg" height="300"></kbd>
 
    Tocks are 50ms later than tick (clock rhythm would sound like [tick..tock........tick..tock........tick..tock]  instead of [tick.....tock.....tick.....tock.....tick.....tock])
 
 - **Clock Running Fast** 
    
-   <img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/fast.jpg" height="300">
+   <kbd><img src="https://github.com/jamesmikesell/ClockAdjuster/blob/master/readme-files/fast.jpg" height="300"></kbd>
 
    Clock is fast by 100ms per 15.09 seconds
