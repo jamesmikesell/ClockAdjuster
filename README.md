@@ -2,9 +2,9 @@
 An [online version](https://jamesmikesell.github.io/ClockAdjuster/)  of the app is available for use on both mobile and desktop use.
 
 # Clock Adjuster
-[Clock Adjuster](https://jamesmikesell.github.io/ClockAdjuster/)  is an app for tuning mechanical time pieces.  Clock Adjuster uses a computer or mobile device's microphone to listen for a clocks ticks and tocks, and then displays their timings graphically.
+[Clock Adjuster](https://jamesmikesell.github.io/ClockAdjuster/)  is an app for tuning mechanical time pieces.  Clock Adjuster uses a computer or mobile device's microphone to listen for a clock's ticks and tocks, and then displays their timings graphically.
 
-The graphed times will reveal if the clock is "out of beat", or if the clock is running fast or slow.  Additionally, since a computer or mobile device's internal clock can drift by several seconds per day, a network based atomic time source can be used for increased precision.
+The graphed times reveal if the clock is "out of beat", or if the clock is running fast or slow.  Additionally, since a computer or mobile device's internal clock can drift by several seconds per day, a network based atomic time source can be used for increased precision.
 
 Clock Adjuster features an audio filter spectrogram which allows a clock's ticking sound to be isolated from other background noises.
 
