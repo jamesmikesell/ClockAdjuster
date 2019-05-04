@@ -55,10 +55,20 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
   }
 
 
-  mouseMove(event: MouseEvent): void {
+  mouseMove(event: MouseEvent | TouchEvent): void {
+    if (event instanceof TouchEvent)
+      event.preventDefault();
+
     if (this.dragging) {
       let height = this.graphCtx.canvas.height;
-      let y = height - event.offsetY;
+
+      let y: number;
+      if (event instanceof MouseEvent)
+        y = height - event.offsetY;
+      else if (event instanceof TouchEvent) {
+        let top = (event.target as HTMLCanvasElement).getBoundingClientRect().top;
+        y = height - (event.touches[0].clientY - top);
+      }
 
       this.clickTime = performance.now();
       this.clickY = y;
