@@ -3,4 +3,5 @@
 <mat-checkbox [(ngModel)]="graphIsLog">Logarithmic Graph Scale</mat-checkbox> <br>
 
 <canvas #canvas class="canvas" (slidestart)="slide($event)" (slide)="slide($event)" (touchstart)="slide($event)"
+    (touchend)="onPointerUp()" (slideend)="onPointerUp()" (mouseup)="onPointerUp()"
     (mousedown)="mouseDown($event)"></canvas>
