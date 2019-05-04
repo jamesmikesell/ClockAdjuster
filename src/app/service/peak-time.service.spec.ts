@@ -32,7 +32,7 @@ describe('PeakTimeService', () => {
       0, 0, 0, 0, y, 0, 0, 0, 0, 0, //  0
       0, 0, 0, y, 0, 0, 0, 0, 0, 0, // 10
       0, 0, 0, y, 0, 0, 0, 0, 0, 0, // 20
-      0, 0, 0, 0, -y, 0, 0, 0, 0, 0, // 30
+      0, 0, 0, 0, y, 0, 0, 0, 0, 0, // 30
       0, 0, 0, 0, 0, y, 0, 0, 0, 0,  // 40
       0, 0
     ]
@@ -45,12 +45,9 @@ describe('PeakTimeService', () => {
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(5200, sampleData);
-    service.dbCutoff = 1; 
     service.findTickTimes();
 
     expect(service).toBeTruthy();
-    console.log("expected", [500, 1400, 2400, 3500, 4600]);
-    console.log("actual  ", service.tickTimes);
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
     expect(service.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
     expect(service.getFramesToDisplay().startTime).toEqual(0);
@@ -66,7 +63,6 @@ describe('PeakTimeService', () => {
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(16200, sampleData);
-    service.dbCutoff = 1; 
     service.findTickTimes();
 
     expect(service).toBeTruthy();
@@ -85,7 +81,6 @@ describe('PeakTimeService', () => {
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(16200, sampleData);
-    service.dbCutoff = 1; 
     service.findTickTimes();
 
     service.maxFramesToDisplay = 3;
@@ -108,7 +103,6 @@ describe('PeakTimeService', () => {
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(5200, sampleData);
-    service.dbCutoff = 1; 
     service.findTickTimes();
 
     service.maxFramesToDisplay = 3;
@@ -129,7 +123,6 @@ describe('PeakTimeService', () => {
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(5200, sampleData);
-    service.dbCutoff = 1; 
     service.findTickTimes();
 
     service.maxFramesToDisplay = 3;
@@ -163,7 +156,6 @@ describe('PeakTimeService', () => {
         0, 0
       ]
     ));
-    service.dbCutoff = 1; 
     service.findTickTimes();
 
     audioService.sampleQueue.add(4300, new Float32Array(
