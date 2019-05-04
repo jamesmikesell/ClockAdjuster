@@ -66,10 +66,15 @@ export class AudioCaptureService {
     }
   }
 
+  private getScriptProcessorBufferSize(): number {
+    return 16384;
+    // return undefined;
+  }
+
   private configureAudioContext(): void {
     this.audioContext = new ((window as any).AudioContext || (window as any).webkitAudioContext)({ latencyHint: "playback" });
     this.filterBandPass = this.audioContext.createBiquadFilter();
-    this.processor = this.audioContext.createScriptProcessor(16384);
+    this.processor = this.audioContext.createScriptProcessor(this.getScriptProcessorBufferSize());
     this.analyser = this.audioContext.createAnalyser();
 
     let sampleQueueSeconds = 3;
@@ -128,10 +133,19 @@ export class AudioCaptureService {
     this.initiated = true;
   }
 
+  private getAudioTime(event: AudioProcessingEvent): number {
+    let anyWindow = window as any;
+    let isChrome = !!anyWindow.chrome && (!!anyWindow.chrome.webstore || !!anyWindow.chrome.runtime);
+    if (isChrome)
+      return event.timeStamp;
+
+    return performance.now();
+  }
+
   private audioProcess(event: AudioProcessingEvent): void {
     let buf = event.inputBuffer.getChannelData(0);
 
-    let timeEnd = ((buf.length - 1) / (event.inputBuffer.sampleRate / 1000)) + performance.now();
+    let timeEnd = ((buf.length - 1) / (event.inputBuffer.sampleRate / 1000)) + this.getAudioTime(event);
     this.sampleQueue.add(timeEnd, buf);
   }
 }
