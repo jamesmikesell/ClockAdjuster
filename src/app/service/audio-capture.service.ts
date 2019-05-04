@@ -130,7 +130,7 @@ export class AudioCaptureService {
   private audioProcess(event: AudioProcessingEvent): void {
     let buf = event.inputBuffer.getChannelData(0);
 
-    let timeEnd = ((buf.length - 1) / (event.inputBuffer.sampleRate / 1000)) + event.timeStamp;
+    let timeEnd = ((buf.length - 1) / (event.inputBuffer.sampleRate / 1000)) + performance.now();
     this.sampleQueue.add(timeEnd, buf);
   }
 }
