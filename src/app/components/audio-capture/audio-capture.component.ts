@@ -51,7 +51,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   }
 
 
-  @HostListener('window:pointerup', ['$event'])
+  @HostListener('window:mouseup', ['$event'])
   onPointerUp(): void {
     this._beatAdjusterDown = false;
     this._chartScrollerDown = false;
@@ -66,11 +66,6 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   windowResize(): void {
     this.peakTimeService.maxFramesToDisplay = this.getMaxFramesToDisplay();
     this.displayTicks();
-  }
-
-
-  getVersion(): string {
-    return environment.version;
   }
 
   getNetworkTimeStatus(): string {
