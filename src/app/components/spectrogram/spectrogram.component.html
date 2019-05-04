@@ -5,13 +5,11 @@
 <canvas #canvas width="400" height="400" 
 
 
-(touchstart)="dragging=true; mouseMove($event)" 
-(touchmove)="mouseMove($event)"
-(touchend)="dragging=false" 
 
-(mousedown)="dragging=true; mouseMove($event)" 
-(mousemove)="mouseMove($event)"
+
+(slidestart)="slide($event)"
+(slide)="slide($event)"
+(mousedown)="dragging=true; mouseDown($event)" 
 (mouseup)="dragging=false" 
-
 
 style="touch-action: none"></canvas>
