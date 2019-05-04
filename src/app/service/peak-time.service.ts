@@ -18,10 +18,10 @@ export class PeakTimeService {
   private scrolledToStartFrame: number;
   private _useNetworkTime = false;
   private _scrollPercent = 1;
-  private startingFrameIndex = 0;
   private dataEndTime: number;
 
-  constructor(private signalProcessingService: SignalProcessingService,
+  constructor(
+    private signalProcessingService: SignalProcessingService,
     private timeService: TimeService,
     private audioCaptureService: AudioCaptureService) { }
 
@@ -52,16 +52,6 @@ export class PeakTimeService {
 
   clear(): void {
     this.tickTimes = [];
-    this.startingFrameIndex = 0;
-  }
-
-  private getPeak(frameSamples: Float32Array): number {
-    if (this.peakDetectionMethod === PeakDetectionMethod.maxPeak)
-      return this.signalProcessingService.getMaxPeakIndex(frameSamples);
-    else {
-      let averageRms = this.audioCaptureService.sampleQueue.getRms();
-      return this.signalProcessingService.getFirstPeakStartIndex(frameSamples, averageRms, this.dbCutoff);
-    }
   }
 
   findTickTimes(): void {
@@ -74,40 +64,60 @@ export class PeakTimeService {
     if (samples.length < sampleRateSeconds * 1.5)
       return;
 
-    if (!this.tickTimes.length) {
-      let firstPeakIndex = this.getPeak(samples);
-      if (firstPeakIndex !== undefined) {
-        let firstPeakStartTime = dataEndTime - ((samples.length - firstPeakIndex - 1) / sampleRateMs);
-        this.tickTimes.push(firstPeakStartTime);
-        this.startingFrameIndex = 1;
+    this.dataEndTime = dataEndTime;
+
+    let sampleStartIndex = 0;
+    if (this.tickTimes.length) {
+      sampleStartIndex = Math.round(samples.length - 1 - ((dataEndTime - this.tickTimes[this.tickTimes.length - 1]) * sampleRateMs));
+      sampleStartIndex = Math.min(Math.abs(sampleStartIndex), 0);
+    }
+
+    let averageRms = this.audioCaptureService.sampleQueue.getRms();
+    let sampleCount = samples.length;
+    const msToJump = this.frameTimeSpanMs / 10;
+    let sampleSet = new Set<number>();
+    for (let i = sampleStartIndex; i < sampleCount; i++) {
+      let sampleEndIndex = i + Math.round(this.frameTimeSpanMs * sampleRateMs);
+      if (sampleEndIndex > sampleCount)
+        break;
+
+      let slice = samples.slice(i, sampleEndIndex);
+
+      let peakIndex: number;
+      if (this.peakDetectionMethod === PeakDetectionMethod.firstPeak)
+        peakIndex = this.signalProcessingService.getFirstPeakStartIndex(slice, averageRms, this.dbCutoff);
+      else
+        peakIndex = this.signalProcessingService.getMaxPeakIndex(slice);
+
+      if (peakIndex !== undefined) {
+        peakIndex += i;
+        sampleSet.add(dataEndTime - ((samples.length - peakIndex - 1) / sampleRateMs));
+        i = Math.round(sampleRateMs * msToJump) + peakIndex;
       } else {
-        return;
+        i += Math.round(this.frameTimeSpanMs * sampleRateMs);
       }
     }
 
-    this.dataEndTime = dataEndTime;
+    if (sampleSet.size) {
+      let sampleList = Array.from(sampleSet.values());
+      sampleList.sort((a, b) => a - b);
 
-    //Find peak in each frame
-    while (true) {
-      let frameStartTime = this.startingFrameIndex * this.frameTimeSpanMs + this.tickTimes[0] - (this.frameTimeSpanMs / 2);
-      let sampleStartIndex = Math.round(samples.length - 1 - ((dataEndTime - frameStartTime) * sampleRateMs));
-      sampleStartIndex = sampleStartIndex < 0 ? 0 : sampleStartIndex;
-      let sampleEndIndex = Math.round(sampleStartIndex + (this.frameTimeSpanMs * sampleRateMs));
+      let lastKnownTime = this.tickTimes.length ? this.tickTimes[this.tickTimes.length - 1] : 0;
+      let dataStartTime = dataEndTime - ((samples.length - 1) / sampleRateMs);
 
-      //Break if we're analyzing the last 200 ms of sample data (we don't want to analyze a peak that potentially isn't finished peaking)
-      if (sampleEndIndex > samples.length - (200 * sampleRateMs))
-        break;
+      //Ignore the first tick time if it's at the very beginning of the sample 
+      // window (could be the trailing edge of an already known tick time)
+      //
+      // Also, because averageRms varies each time we try to find ticks, we may get slightly different start times for what
+      // are actually the same tick, so we need to ensure we add msToJump even if we're starting at the last known tick time
+      let minSampleTime = Math.max(dataStartTime, lastKnownTime) + msToJump;
 
-      let frameSamples = samples.slice(sampleStartIndex, sampleEndIndex);
-      let peakStartIndex = this.getPeak(frameSamples);
-
-      if (peakStartIndex !== undefined) {
-        let peakMsIntoFrame = peakStartIndex / sampleRateMs;
-        let peakTime = peakMsIntoFrame + frameStartTime;
-
-        this.tickTimes.push(peakTime);
+      let count = sampleList.length;
+      for (let i = 0; i < count; i++) {
+        const singleTime = sampleList[i];
+        if (singleTime > minSampleTime)
+          this.tickTimes.push(singleTime);
       }
-      this.startingFrameIndex++;
     }
   }
 
