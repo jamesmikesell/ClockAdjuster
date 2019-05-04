@@ -10,6 +10,10 @@ import { timer, Subscription } from 'rxjs';
 })
 export class SpectrogramComponent implements OnInit, OnDestroy {
 
+  private static _graphIsLog = false;
+  private static _colorGraph = true;
+  private static _logIntensity = false;
+
   @ViewChild('canvas')
   private canvasRef: ElementRef;
   private speed = 1;
@@ -22,10 +26,6 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
   private frequencyBinCount: number;
   private dragging = false;
   private lineRemovalTimer: Subscription;
-
-  private _graphIsLog = false;
-  private _colorGraph = true;
-  private _logIntensity = true;
 
 
   constructor(private audioCaptureService: AudioCaptureService) { }
@@ -133,33 +133,32 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
   }
 
   get graphIsLog(): boolean {
-    return this._graphIsLog;
+    return SpectrogramComponent._graphIsLog;
   }
   set graphIsLog(value: boolean) {
-    this._graphIsLog = value;
+    SpectrogramComponent._graphIsLog = value;
     this.configFFTSize();
   }
 
   get colorGraph(): boolean {
-    return this._colorGraph;
+    return SpectrogramComponent._colorGraph;
   }
   set colorGraph(value: boolean) {
-    this._colorGraph = value;
-    this._logIntensity = value;
+    SpectrogramComponent._colorGraph = value;
     this.intensityShadeMap.clear();
   }
 
   get logIntensity(): boolean {
-    return this._logIntensity;
+    return SpectrogramComponent._logIntensity;
   }
   set logIntensity(value: boolean) {
-    this._logIntensity = value;
+    SpectrogramComponent._logIntensity = value;
     this.intensityShadeMap.clear();
   }
 
 
   private configFFTSize(): void {
-    if (this._graphIsLog)
+    if (SpectrogramComponent._graphIsLog)
       this.audioCaptureService.setFFTBinCount(Math.pow(2, 14));
     else
       this.audioCaptureService.setFFTBinCount(Math.pow(2, 9));
@@ -260,13 +259,13 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
       return existing;
 
     let percent: number;
-    if (this._logIntensity)
+    if (SpectrogramComponent._logIntensity)
       percent = Math.log(value + 1) / Math.log(256);
     else
       percent = value / 255;
 
     let string: string;
-    if (this._colorGraph) {
+    if (SpectrogramComponent._colorGraph) {
       string = `hsla(${-percent * 240 + 240}, 100%, 50%, 1)`;
     } else {
       let minLum = .259;
