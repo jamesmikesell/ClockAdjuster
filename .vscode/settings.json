@@ -5,7 +5,8 @@
         "datasets",
         "highpass",
         "hsla",
-        "nosleep"
+        "nosleep",
+        "slidestart"
     ],
     "search.exclude": {
         "**/docs": true
