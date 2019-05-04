@@ -1,6 +1,7 @@
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, HostListener } from '@angular/core';
 import { AudioCaptureService } from '../../service/audio-capture.service';
 import { HammerInput } from '@angular/material';
+import { timer, Subject, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-spectrogram',
@@ -8,8 +9,6 @@ import { HammerInput } from '@angular/material';
   styleUrls: ['./spectrogram.component.css']
 })
 export class SpectrogramComponent implements OnInit, OnDestroy {
-
-  dragging = false;
 
   @ViewChild('canvas')
   private canvasRef: ElementRef;
@@ -20,8 +19,9 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
   private run = true;
   private intensityShadeMap = new Map<number, string>();
   private clickY = 0;
-  private clickTime: number;
   private frequencyBinCount: number;
+  private dragging = false;
+  private lineRemovalTimer: Subscription;
 
   private _graphIsLog = false;
   private _colorGraph = true;
@@ -41,7 +41,48 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
     this.graphCtx = this.initOffscreenCanvasCtx(canvas);
     this.lineCtx = this.initOffscreenCanvasCtx(canvas);
 
+    this.resizeAllCanvases();
+
     requestAnimationFrame(() => this.render());
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(): void {
+    this.resizeAllCanvases();
+  }
+
+  @HostListener('window:touchend', ['$event'])
+  @HostListener('window:mouseup', ['$event'])
+  onPointerUp(): void {
+    this.dragging = false;
+
+    if (this.clickY) {
+      if (this.lineRemovalTimer && !this.lineRemovalTimer.closed)
+        this.lineRemovalTimer.unsubscribe();
+
+      this.lineRemovalTimer = timer(3000)
+        .subscribe(() => {
+          if (!this.dragging)
+            this.clickY = undefined;
+        });
+    }
+  }
+
+  private resizeAllCanvases(): void {
+    this.resizeCanvas(this.graphCtx.canvas);
+    this.resizeCanvas(this.lineCtx.canvas);
+    this.resizeCanvas(this.canvasCtx.canvas);
+  }
+
+  private resizeCanvas(canvas: HTMLCanvasElement): void {
+    let cssWidth = this.canvasRef.nativeElement.clientWidth;
+    let cssHeight = this.canvasRef.nativeElement.clientHeight;
+
+    let displayWidth = Math.floor(cssWidth * window.devicePixelRatio);
+    let displayHeight = Math.floor(cssHeight * window.devicePixelRatio);
+
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
   }
 
   private initOffscreenCanvasCtx(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
@@ -57,20 +98,27 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
 
   slide(event: HammerInput): void {
     let top = this.canvasRef.nativeElement.getBoundingClientRect().top;
-    let height = this.graphCtx.canvas.height;
-    let y = height - (event.center.y - top);
+    let height = this.canvasRef.nativeElement.clientHeight;
+    let y = (height - (event.center.y - top)) * window.devicePixelRatio;
 
     event.preventDefault();
 
     this.setY(y);
+    this.dragging = true;
+  }
+
+  mouseDown(event: MouseEvent): void {
+    let height = this.canvasRef.nativeElement.clientHeight;
+    let y = (height - event.offsetY) * window.devicePixelRatio;
+
+    this.setY(y);
+    this.dragging = true;
   }
 
   private setY(y: number): void {
+    this.clickY = Math.floor(y);
+
     let height = this.graphCtx.canvas.height;
-
-    this.clickTime = performance.now();
-    this.clickY = y;
-
     let maxFrequency = this.audioCaptureService.getSampleRate() / 2;
     let frequency: number;
     if (this.graphIsLog) {
@@ -82,13 +130,6 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
     }
 
     this.audioCaptureService.setFrequency(Math.round(frequency));
-  }
-
-  mouseDown(event: MouseEvent): void {
-    let height = this.graphCtx.canvas.height;
-    let y = height - event.offsetY;
-
-    this.setY(y);
   }
 
   get graphIsLog(): boolean {
@@ -238,21 +279,18 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
   }
 
   private drawSelectionLine(): void {
-    if (this.clickTime) {
-      this.lineCtx.setTransform(1, 0, 0, 1, 0, 0);
-      this.lineCtx.clearRect(0, 0, this.lineCtx.canvas.width, this.lineCtx.canvas.height);
+    this.lineCtx.setTransform(1, 0, 0, 1, 0, 0);
+    this.lineCtx.clearRect(0, 0, this.lineCtx.canvas.width, this.lineCtx.canvas.height);
 
-      if (this.clickTime > performance.now() - 3000) {
-        let lineY = this.lineCtx.canvas.height - this.clickY;
+    if (this.clickY) {
+      let lineY = this.lineCtx.canvas.height - this.clickY;
 
-        this.lineCtx.beginPath();
-        this.lineCtx.moveTo(0, lineY);
-        this.lineCtx.lineTo(this.lineCtx.canvas.width, lineY);
-        this.lineCtx.strokeStyle = "rgb(255, 0, 0)";
-        this.lineCtx.stroke();
-      } else {
-        this.clickTime = 0;
-      }
+      this.lineCtx.beginPath();
+      this.lineCtx.moveTo(0, lineY);
+      this.lineCtx.lineTo(this.lineCtx.canvas.width, lineY);
+      this.lineCtx.strokeStyle = "rgb(255, 0, 0)";
+      this.lineCtx.lineWidth = Math.floor(2 * window.devicePixelRatio);
+      this.lineCtx.stroke();
     }
   }
 
