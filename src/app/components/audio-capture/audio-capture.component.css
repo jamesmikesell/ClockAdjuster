@@ -1,6 +1,7 @@
 .chart-scroller {
   width: 90vw;
   margin-left: 5vw;
+  margin-bottom: 40px;
 }
 
 .beat-adjuster {
@@ -13,10 +14,7 @@
   width: 100%;
 }
 
-.version-text {
-  font-size: .5em;
-  margin-top: 50px;
-}
+
 
 .hidden-keep-space {
   visibility: hidden;
@@ -30,4 +28,8 @@
 
 .control-container {
   max-width: 750px;
+}
+
+.content-container{
+  position: relative;
 }
