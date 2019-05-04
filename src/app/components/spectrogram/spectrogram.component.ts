@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy, HostListener } from '@angular/core';
 import { AudioCaptureService } from '../../service/audio-capture.service';
 import { HammerInput } from '@angular/material';
-import { timer, Subject, Subscription } from 'rxjs';
+import { timer, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-spectrogram',
