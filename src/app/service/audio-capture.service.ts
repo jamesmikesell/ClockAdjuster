@@ -54,10 +54,12 @@ export class AudioCaptureService {
     if (!this.audioContext) {
       this.configureAudioContext();
 
-      let config: MediaStreamConstraints = {
+      let config: any = {
         "audio": {
           echoCancellation: false,
-          sampleRate: 44100
+          sampleRate: 44100,
+          autoGainControl: false,
+          noiseSuppression: false
         }
       };
       return navigator.mediaDevices.getUserMedia(config).then(stream => this.configureStream(stream));
@@ -68,7 +70,6 @@ export class AudioCaptureService {
 
   private getScriptProcessorBufferSize(): number {
     return 16384;
-    // return undefined;
   }
 
   private configureAudioContext(): void {
