@@ -6,7 +6,8 @@
         "highpass",
         "hsla",
         "nosleep",
-        "slidestart"
+        "slidestart",
+        "webstore"
     ],
     "search.exclude": {
         "**/docs": true
