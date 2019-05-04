@@ -50,6 +50,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   }
 
 
+  @HostListener('window:touchend', ['$event'])
   @HostListener('window:mouseup', ['$event'])
   onPointerUp(): void {
     this._beatAdjusterDown = false;
