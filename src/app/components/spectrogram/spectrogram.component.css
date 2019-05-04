@@ -1,0 +1,5 @@
+.canvas{
+    height: 400px;
+    width: 100%;
+    touch-action: none;
+}
