@@ -56,7 +56,8 @@ export class AudioCaptureService {
 
       let config: MediaStreamConstraints = {
         "audio": {
-          echoCancellation: false
+          echoCancellation: false,
+          sampleRate: 44100
         }
       };
       return navigator.mediaDevices.getUserMedia(config).then(stream => this.configureStream(stream));
