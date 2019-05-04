@@ -69,7 +69,7 @@ export class AudioCaptureService {
   private configureAudioContext(): void {
     this.audioContext = new ((window as any).AudioContext || (window as any).webkitAudioContext)({ latencyHint: "playback" });
     this.filterBandPass = this.audioContext.createBiquadFilter();
-    this.processor = this.audioContext.createScriptProcessor();
+    this.processor = this.audioContext.createScriptProcessor(16384);
     this.analyser = this.audioContext.createAnalyser();
 
     let sampleQueueSeconds = 3;
