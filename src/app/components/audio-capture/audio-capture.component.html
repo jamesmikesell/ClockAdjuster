@@ -141,6 +141,7 @@ Running Time: <span *ngIf="runningTime">{{runningTime}}</span>
     </div>
 
     <mat-slider class="chart-scroller" [min]="0" [max]="1000000" (mouseup)="onPointerUp()"
-      (mousedown)="chartScrollerDown()" (input)="scroll = $event.value" [(ngModel)]="scroll"></mat-slider>
+      (touchstart)="chartScrollerDown()" (mousedown)="chartScrollerDown()" (input)="scroll = $event.value"
+      [(ngModel)]="scroll"></mat-slider>
   </div>
 </div>
