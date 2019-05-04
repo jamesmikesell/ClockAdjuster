@@ -68,8 +68,8 @@
         Actual: {{bph}} BPH. <br>
         Clock is {{targetDelta}}
       </div>
-      <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (mouseup)="onPointerUp()"
-        (mousedown)="beatAdjusterDown()" (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
+      <mat-slider class="beat-adjuster" [min]="-1000000" [max]="1000000" (mousedown)="beatAdjusterDown()"
+        (touchstart)="beatAdjusterDown()" (input)="beatAdjuster = $event.value" [(ngModel)]="beatAdjuster">
       </mat-slider>
     </mat-expansion-panel>
 
@@ -140,8 +140,8 @@ Running Time: <span *ngIf="runningTime">{{runningTime}}</span>
         [options]="chartOptions"></canvas>
     </div>
 
-    <mat-slider class="chart-scroller" [min]="0" [max]="1000000" (mouseup)="onPointerUp()"
-      (touchstart)="chartScrollerDown()" (mousedown)="chartScrollerDown()" (input)="scroll = $event.value"
-      [(ngModel)]="scroll"></mat-slider>
+    <mat-slider class="chart-scroller" [min]="0" [max]="1000000" (touchstart)="chartScrollerDown()"
+      (mousedown)="chartScrollerDown()" (input)="scroll = $event.value" [(ngModel)]="scroll">
+    </mat-slider>
   </div>
 </div>
