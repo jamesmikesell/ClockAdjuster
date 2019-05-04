@@ -2,6 +2,16 @@
 <mat-checkbox [(ngModel)]="logIntensity">Logarithmic Intensity</mat-checkbox> <br>
 <mat-checkbox [(ngModel)]="graphIsLog">Logarithmic Graph Scale</mat-checkbox> <br>
 
-<canvas #canvas width="400" height="400" (mousedown)="dragging=true; mouseMove($event)"
-  (mousemove)="mouseMove($event)" (mouseup)="dragging=false" (mouseleave)="dragging=false"
-  style="touch-action: none"></canvas>
+<canvas #canvas width="400" height="400" 
+
+
+(touchstart)="dragging=true; mouseMove($event)" 
+(touchmove)="mouseMove($event)"
+(touchend)="dragging=false" 
+
+(mousedown)="dragging=true; mouseMove($event)" 
+(mousemove)="mouseMove($event)"
+(mouseup)="dragging=false" 
+
+
+style="touch-action: none"></canvas>
