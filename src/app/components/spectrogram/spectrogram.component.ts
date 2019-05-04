@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { AudioCaptureService } from '../../service/audio-capture.service';
+import { HammerInput } from '@angular/material';
 
 @Component({
   selector: 'app-spectrogram',
@@ -54,37 +55,40 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
     this.run = false;
   }
 
+  slide(event: HammerInput): void {
+    let top = this.canvasRef.nativeElement.getBoundingClientRect().top;
+    let height = this.graphCtx.canvas.height;
+    let y = height - (event.center.y - top);
 
-  mouseMove(event: MouseEvent | TouchEvent): void {
-    if (event instanceof TouchEvent)
-      event.preventDefault();
+    event.preventDefault();
 
-    if (this.dragging) {
-      let height = this.graphCtx.canvas.height;
+    this.setY(y);
+  }
 
-      let y: number;
-      if (event instanceof MouseEvent)
-        y = height - event.offsetY;
-      else if (event instanceof TouchEvent) {
-        let top = (event.target as HTMLCanvasElement).getBoundingClientRect().top;
-        y = height - (event.touches[0].clientY - top);
-      }
+  private setY(y: number): void {
+    let height = this.graphCtx.canvas.height;
 
-      this.clickTime = performance.now();
-      this.clickY = y;
+    this.clickTime = performance.now();
+    this.clickY = y;
 
-      let maxFrequency = this.audioCaptureService.getSampleRate() / 2;
-      let frequency: number;
-      if (this.graphIsLog) {
-        let percent = y / (height - 1);
-        let binIndex = Math.pow(this.frequencyBinCount, percent) - 1;
-        frequency = maxFrequency * (binIndex / this.frequencyBinCount);
-      } else {
-        frequency = (y / height) * maxFrequency;
-      }
-
-      this.audioCaptureService.setFrequency(Math.round(frequency));
+    let maxFrequency = this.audioCaptureService.getSampleRate() / 2;
+    let frequency: number;
+    if (this.graphIsLog) {
+      let percent = y / (height - 1);
+      let binIndex = Math.pow(this.frequencyBinCount, percent) - 1;
+      frequency = maxFrequency * (binIndex / this.frequencyBinCount);
+    } else {
+      frequency = (y / height) * maxFrequency;
     }
+
+    this.audioCaptureService.setFrequency(Math.round(frequency));
+  }
+
+  mouseDown(event: MouseEvent): void {
+    let height = this.graphCtx.canvas.height;
+    let y = height - event.offsetY;
+
+    this.setY(y);
   }
 
   get graphIsLog(): boolean {
