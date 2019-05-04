@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { timer, Subscription } from 'rxjs';
 import { ChartOptions } from 'chart.js';
 import { AudioCaptureService } from '../../service/audio-capture.service';
-import { environment } from '../../../environments/environment';
 import { NoSleepService } from '../../service/no-sleep.service';
 import { PeakTimeService, PeakDetectionMethod } from '../../service/peak-time.service';
 import { TimeService } from '../../service/time.service';
