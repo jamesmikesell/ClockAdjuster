@@ -3,8 +3,9 @@ import { timer, Subscription } from 'rxjs';
 import { ChartOptions } from 'chart.js';
 import { AudioCaptureService } from '../../service/audio-capture.service';
 import { NoSleepService } from '../../service/no-sleep.service';
-import { PeakTimeService, PeakDetectionMethod } from '../../service/peak-time.service';
+import { PeakCaptureService, PeakDetectionMethod } from '../../service/peak-capture.service';
 import { TimeService } from '../../service/time.service';
+import { PeakGroupingService } from '../../service/peak-grouping.service';
 
 @Component({
   selector: 'app-audio-capture',
@@ -34,12 +35,13 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   constructor(public audioCaptureService: AudioCaptureService,
     public noSleep: NoSleepService,
     public timeService: TimeService,
-    public peakTimeService: PeakTimeService) { }
+    public peakGroupingService: PeakGroupingService,
+    public peakCaptureService: PeakCaptureService) { }
 
   ngOnInit(): void {
-    this.peakTimeService.maxFramesToDisplay = this.getMaxFramesToDisplay();
-    this.peakTimeService.frameTimeSpanMs = this.getFrameTimeSpanMs();
-    this.peakTimeService.scrollPercentChange.subscribe(() => this.tryUpdateScrollerPosition());
+    this.peakGroupingService.maxFramesToDisplay = this.getMaxFramesToDisplay();
+    this.peakCaptureService.frameTimeSpanMs = this.getFrameTimeSpanMs();
+    this.peakGroupingService.scrollPercentChange.subscribe(() => this.tryUpdateScrollerPosition());
   }
 
   ngOnDestroy(): void {
@@ -64,7 +66,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
   @HostListener('window:resize', ['$event'])
   windowResize(): void {
-    this.peakTimeService.maxFramesToDisplay = this.getMaxFramesToDisplay();
+    this.peakGroupingService.maxFramesToDisplay = this.getMaxFramesToDisplay();
     this.displayTicks();
   }
 
@@ -82,10 +84,10 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   }
 
   get useNetworkTime(): boolean {
-    return this.peakTimeService.useNetworkTime;
+    return this.peakGroupingService.useNetworkTime;
   }
   set useNetworkTime(value: boolean) {
-    this.peakTimeService.useNetworkTime = value;
+    this.peakGroupingService.useNetworkTime = value;
     this.timeService.setEnabled(value);
     this.resetChart();
   }
@@ -156,7 +158,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   private updateRunTime(): void {
     if (!this.periodicUpdate.closed) {
       let msUntilNextUpdate: number;
-      let firstTickTime = this.peakTimeService.getFirstTickTime();
+      let firstTickTime = this.peakCaptureService.getFirstTickTime();
       if (firstTickTime) {
         let elapsedMs = Math.round(performance.now() - firstTickTime);
 
@@ -203,14 +205,14 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     this.audioCaptureService.sampleQueue.clear();
     this.labelData = [];
     this.lineData = [];
-    this.peakTimeService.clear();
+    this.peakCaptureService.clear();
     this.runningTime = undefined;
     this.configureChart();
   }
 
   private resetChart(): void {
     this.configureChart();
-    this.peakTimeService.frameTimeSpanMs = this.getFrameTimeSpanMs();
+    this.peakCaptureService.frameTimeSpanMs = this.getFrameTimeSpanMs();
     this.displayTicks();
   }
 
@@ -260,7 +262,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   }
 
   private findAndDisplayTicks(): void {
-    this.peakTimeService.findTickTimes();
+    this.peakCaptureService.findTickTimes();
     this.displayTicks();
   }
 
@@ -273,7 +275,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   get scroll(): number { return this.scrollValue; }
   set scroll(value: number) {
     this.scrollValue = value;
-    this.peakTimeService.scrollPercent = this.scrollValue / this.scrollMax;
+    this.peakGroupingService.scrollPercent = this.scrollValue / this.scrollMax;
 
     this.displayTicks();
   }
@@ -284,11 +286,11 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
   private tryUpdateScrollerPosition(): void {
     if (!this._chartScrollerDown)
-      this.scrollValue = this.peakTimeService.scrollPercent * this.scrollMax;
+      this.scrollValue = this.peakGroupingService.scrollPercent * this.scrollMax;
   }
 
   private displayTicks(): void {
-    let frames = this.peakTimeService.getFramesToDisplay();
+    let frames = this.peakGroupingService.getFramesToDisplay();
     if (frames)
       this.syncFramesWithGraph(frames.frames, frames.startTime, frames.firstFrameTime);
   }
