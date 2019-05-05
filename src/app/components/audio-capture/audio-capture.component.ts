@@ -150,7 +150,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   }
 
   private startUpdateTimer(): void {
-    this.periodicUpdate = timer(1000, 100).subscribe(() => {
+    this.periodicUpdate = timer(0, 500).subscribe(() => {
       this.findAndDisplayTicks();
     });
   }
@@ -187,6 +187,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
       .start()
       .then(() => {
         this.audioCaptureService.sampleQueue.clear();
+        this.peakCaptureService.startTimer();
         this.startUpdateTimer();
         this.configureChart();
         this.updateRunTime();
@@ -262,7 +263,6 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
   }
 
   private findAndDisplayTicks(): void {
-    this.peakCaptureService.findTickTimes();
     this.displayTicks();
   }
 
