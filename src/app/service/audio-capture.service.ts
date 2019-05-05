@@ -78,7 +78,7 @@ export class AudioCaptureService {
     this.processor = this.audioContext.createScriptProcessor(this.getScriptProcessorBufferSize());
     this.analyser = this.audioContext.createAnalyser();
 
-    let sampleQueueSeconds = 3;
+    let sampleQueueSeconds = 10;
     this.sampleQueue = new SampleQueue(Math.round(sampleQueueSeconds * this.audioContext.sampleRate));
 
     this.filterBandPass.type = "bandpass";
