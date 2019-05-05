@@ -22,7 +22,6 @@ export class PeakGroupingService {
   get useNetworkTime(): boolean {
     return this._useNetworkTime;
   }
-
   set useNetworkTime(value: boolean) {
     this._useNetworkTime = value;
   }
@@ -30,7 +29,6 @@ export class PeakGroupingService {
   get scrollPercent(): number {
     return this._scrollPercent;
   }
-
   set scrollPercent(value: number) {
     this._scrollPercent = value;
     this.scrolledToStartFrame = undefined;
