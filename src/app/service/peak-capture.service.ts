@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SignalProcessingService } from './signal-processing.service';
 import { AudioCaptureService } from './audio-capture.service';
+import { timer, Subscription } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -12,11 +13,18 @@ export class PeakCaptureService {
   tickTimes: number[] = [];
   dataEndTime: number;
 
+  private updateTimerSubscription: Subscription;
+
   constructor(
     private signalProcessingService: SignalProcessingService,
     private audioCaptureService: AudioCaptureService) { }
 
 
+  startTimer(): void {
+    if (!this.updateTimerSubscription)
+      this.updateTimerSubscription = timer(0, 500)
+        .subscribe(() => this.findTickTimes());
+  }
 
   getFirstTickTime(): number {
     if (this.tickTimes.length)
