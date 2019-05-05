@@ -107,16 +107,16 @@
 
       <mat-form-field>
         <mat-label>Tick Sound Detection Method</mat-label>
-        <mat-select [(value)]="peakTimeService.peakDetectionMethod">
+        <mat-select [(value)]="peakCaptureService.peakDetectionMethod">
           <mat-option [value]="PeakDetectionMethod.firstPeak">Time of First Sound Level Above Average</mat-option>
           <mat-option [value]="PeakDetectionMethod.maxPeak">Time of Max Sound Level</mat-option>
         </mat-select>
       </mat-form-field>
 
 
-      <mat-form-field *ngIf="peakTimeService.peakDetectionMethod === PeakDetectionMethod.firstPeak">
+      <mat-form-field *ngIf="peakCaptureService.peakDetectionMethod === PeakDetectionMethod.firstPeak">
         <mat-label>DB Cutoff</mat-label>
-        <input matInput type="number" step="1" [(ngModel)]="peakTimeService.dbCutoff" min="1" max="100">
+        <input matInput type="number" step="1" [(ngModel)]="peakCaptureService.dbCutoff" min="1" max="100">
       </mat-form-field>
 
       <br>

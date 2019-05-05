@@ -1,12 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { PeakTimeService } from './peak-time.service';
 import { AudioCaptureService } from './audio-capture.service';
 import { SignalProcessingService } from './signal-processing.service';
 import { SampleQueue } from '../model/sample-queue';
 import { TimeService } from './time.service';
+import { PeakCaptureService } from './peak-capture.service';
+import { PeakGroupingService } from './peak-grouping.service';
 
-describe('PeakTimeService', () => {
+describe('PeakCaptureService', () => {
   beforeEach(() => TestBed.configureTestingModule({
     providers: [
       {
@@ -20,6 +21,10 @@ describe('PeakTimeService', () => {
       {
         provide: SignalProcessingService,
         useClass: SignalProcessingService
+      },
+      {
+        provide: PeakGroupingService,
+        useClass: PeakGroupingService
       }
     ]
   }));
@@ -40,8 +45,9 @@ describe('PeakTimeService', () => {
 
 
   it('not full buffer', () => {
-    const service: PeakTimeService = TestBed.get(PeakTimeService);
+    const service: PeakCaptureService = TestBed.get(PeakCaptureService);
     const audioService: MockAudioService = TestBed.get(AudioCaptureService);
+    const peakGroupingService: PeakGroupingService = TestBed.get(PeakGroupingService);
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(5200, sampleData);
@@ -52,17 +58,18 @@ describe('PeakTimeService', () => {
     console.log("expected", [500, 1400, 2400, 3500, 4600]);
     console.log("actual  ", service.tickTimes);
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
-    expect(service.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
-    expect(service.getFramesToDisplay().startTime).toEqual(0);
-    expect(service.getFramesToDisplay().firstFrameTime).toEqual(0);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
+    expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(0);
+    expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(0);
   });
 
 
 
 
   it('not full buffer, late time start', () => {
-    const service: PeakTimeService = TestBed.get(PeakTimeService);
+    const service: PeakCaptureService = TestBed.get(PeakCaptureService);
     const audioService: MockAudioService = TestBed.get(AudioCaptureService);
+    const peakGroupingService: PeakGroupingService = TestBed.get(PeakGroupingService);
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(16200, sampleData);
@@ -71,31 +78,32 @@ describe('PeakTimeService', () => {
 
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([11500, 12400, 13400, 14500, 15600]);
-    expect(service.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
-    expect(service.getFramesToDisplay().startTime).toEqual(11000);
-    expect(service.getFramesToDisplay().firstFrameTime).toEqual(11000);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
+    expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(11000);
+    expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(11000);
   });
 
 
 
 
   it('not full buffer, late time start, reduced display end', () => {
-    const service: PeakTimeService = TestBed.get(PeakTimeService);
+    const service: PeakCaptureService = TestBed.get(PeakCaptureService);
     const audioService: MockAudioService = TestBed.get(AudioCaptureService);
+    const peakGroupingService: PeakGroupingService = TestBed.get(PeakGroupingService);
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(16200, sampleData);
     service.dbCutoff = 1; 
     service.findTickTimes();
 
-    service.maxFramesToDisplay = 3;
+    peakGroupingService.maxFramesToDisplay = 3;
 
 
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([11500, 12400, 13400, 14500, 15600]);
-    expect(service.getFramesToDisplay().frames).toEqual([-100, 0, 100]);
-    expect(service.getFramesToDisplay().startTime).toEqual(13000);
-    expect(service.getFramesToDisplay().firstFrameTime).toEqual(11000);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([-100, 0, 100]);
+    expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(13000);
+    expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(11000);
   });
 
 
@@ -103,52 +111,55 @@ describe('PeakTimeService', () => {
 
 
   it('reduced display set end', () => {
-    const service: PeakTimeService = TestBed.get(PeakTimeService);
+    const service: PeakCaptureService = TestBed.get(PeakCaptureService);
     const audioService: MockAudioService = TestBed.get(AudioCaptureService);
+    const peakGroupingService: PeakGroupingService = TestBed.get(PeakGroupingService);
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(5200, sampleData);
     service.dbCutoff = 1; 
     service.findTickTimes();
 
-    service.maxFramesToDisplay = 3;
+    peakGroupingService.maxFramesToDisplay = 3;
 
     console.log(service.tickTimes);
-    console.log(service.getFramesToDisplay());
+    console.log(peakGroupingService.getFramesToDisplay());
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
-    expect(service.getFramesToDisplay().frames).toEqual([-100, 0, 100]);
-    expect(service.getFramesToDisplay().startTime).toEqual(2000);
-    expect(service.getFramesToDisplay().firstFrameTime).toEqual(0);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([-100, 0, 100]);
+    expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(2000);
+    expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(0);
   });
 
 
   it('reduced display set start', () => {
-    const service: PeakTimeService = TestBed.get(PeakTimeService);
+    const service: PeakCaptureService = TestBed.get(PeakCaptureService);
     const audioService: MockAudioService = TestBed.get(AudioCaptureService);
+    const peakGroupingService: PeakGroupingService = TestBed.get(PeakGroupingService);
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(5200, sampleData);
     service.dbCutoff = 1; 
     service.findTickTimes();
 
-    service.maxFramesToDisplay = 3;
-    service.scrollPercent = 0;
+    peakGroupingService.maxFramesToDisplay = 3;
+    peakGroupingService.scrollPercent = 0;
 
     console.log(service.tickTimes);
-    console.log(service.getFramesToDisplay());
+    console.log(peakGroupingService.getFramesToDisplay());
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
-    expect(service.getFramesToDisplay().frames).toEqual([0, -100, -100]);
-    expect(service.getFramesToDisplay().startTime).toEqual(0);
-    expect(service.getFramesToDisplay().firstFrameTime).toEqual(0);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([0, -100, -100]);
+    expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(0);
+    expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(0);
   });
 
 
 
   it('full buffer', () => {
-    const service: PeakTimeService = TestBed.get(PeakTimeService);
+    const service: PeakCaptureService = TestBed.get(PeakCaptureService);
     const audioService: MockAudioService = TestBed.get(AudioCaptureService);
+    const peakGroupingService: PeakGroupingService = TestBed.get(PeakGroupingService);
 
     audioService.sampleQueue = new SampleQueue(24);
 
@@ -189,9 +200,9 @@ describe('PeakTimeService', () => {
 
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
-    expect(service.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
-    expect(service.getFramesToDisplay().startTime).toEqual(0);
-    expect(service.getFramesToDisplay().firstFrameTime).toEqual(0);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
+    expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(0);
+    expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(0);
   });
 });
 
