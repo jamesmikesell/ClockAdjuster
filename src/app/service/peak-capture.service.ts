@@ -97,11 +97,13 @@ export class PeakCaptureService {
       // Also, because averageRms varies each time we try to find ticks, we may get slightly different start times for what
       // are actually the same tick, so we need to ensure we add msToJump even if we're starting at the last known tick time
       let minSampleTime = Math.max(dataStartTime, lastKnownTime) + msToJump;
+      // Ignore any peaks at the very end as they might not be done peaking
+      let maxSampleTime = dataEndTime - msToJump;
 
       let count = sampleList.length;
       for (let i = 0; i < count; i++) {
         const singleTime = sampleList[i];
-        if (singleTime > minSampleTime)
+        if (singleTime > minSampleTime && singleTime < maxSampleTime)
           this.tickTimes.push(singleTime);
       }
     }
