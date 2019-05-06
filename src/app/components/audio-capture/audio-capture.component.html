@@ -1,7 +1,6 @@
 <div class="control-container">
   <div class="top-controls" fxLayout="row wrap" fxLayoutAlign="space-around center">
-    <button mat-raised-button color="primary" (click)="start()">Start Capture</button>
-    <button mat-raised-button (click)="pause()">Pause Display</button>
+    <button mat-raised-button color="primary" (click)="toggleCaptureUpdate()">{{playPauseResumeText()}}</button>
     <button mat-raised-button (click)="reset()">Reset</button>
 
 
