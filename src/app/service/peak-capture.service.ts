@@ -26,6 +26,10 @@ export class PeakCaptureService {
         .subscribe(() => this.findTickTimes());
   }
 
+  isRunning(): boolean {
+    return (this.updateTimerSubscription && !this.updateTimerSubscription.closed);
+  }
+
   getFirstTickTime(): number {
     if (this.tickTimes.length)
       return this.tickTimes[0];

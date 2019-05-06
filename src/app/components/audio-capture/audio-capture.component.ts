@@ -182,7 +182,28 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     }
   }
 
-  start(): void {
+  private isPaused(): boolean {
+    return !this.periodicUpdate || this.periodicUpdate.closed;
+  }
+
+  playPauseResumeText(): string {
+    if (!this.peakCaptureService.isRunning())
+      return "Start Capture";
+
+    if (this.isPaused())
+      return "Resume Displaying";
+
+    return "Pause Displaying";
+  }
+
+  toggleCaptureUpdate(): void {
+    if (!this.peakCaptureService.isRunning() || this.isPaused())
+      this.start();
+    else
+      this.pause();
+  }
+
+  private start(): void {
     this.audioCaptureService
       .start()
       .then(() => {
