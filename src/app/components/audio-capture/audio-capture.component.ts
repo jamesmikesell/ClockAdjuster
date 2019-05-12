@@ -121,7 +121,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
       fastSlow = " slow";
     this.targetDelta = `${fastSlow} by ${Math.abs(secondsDelta)} seconds / day.`;
 
-    //Using a timer to the amounts of UI updates as the slider slides
+    //Using a timer to limit the amounts of UI updates as the slider slides
     if (!this.beatAdjustmentUpdateDelayTimer || this.beatAdjustmentUpdateDelayTimer.closed)
       this.beatAdjustmentUpdateDelayTimer = timer(100).subscribe(() => this.resetChart());
   }
