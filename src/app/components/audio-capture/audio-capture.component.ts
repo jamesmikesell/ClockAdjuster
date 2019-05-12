@@ -322,7 +322,7 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
     this.lineData = [];
     for (let i = 0; i < maxFrames; i++) {
       let seconds = (Math.abs((windowStartTime - firstFrameTime + (this.getFrameTimeSpanMs() * i)) / 10) / 100);
-      if (i >= frames.length) {
+      if (i >= frames.length || frames[i].length === 0) {
         this.lineData.push({
           x: seconds,
           y: undefined
