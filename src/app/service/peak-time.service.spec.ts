@@ -51,14 +51,14 @@ describe('PeakCaptureService', () => {
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(5200, sampleData);
-    service.dbCutoff = 1; 
+    service.dbCutoff = 1;
     service.findTickTimes();
 
     expect(service).toBeTruthy();
     console.log("expected", [500, 1400, 2400, 3500, 4600]);
     console.log("actual  ", service.tickTimes);
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
-    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([[0], [-100], [-100], [0], [100]]);
     expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(0);
     expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(0);
   });
@@ -73,12 +73,12 @@ describe('PeakCaptureService', () => {
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(16200, sampleData);
-    service.dbCutoff = 1; 
+    service.dbCutoff = 1;
     service.findTickTimes();
 
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([11500, 12400, 13400, 14500, 15600]);
-    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([[0], [-100], [-100], [0], [100]]);
     expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(11000);
     expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(11000);
   });
@@ -93,7 +93,7 @@ describe('PeakCaptureService', () => {
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(16200, sampleData);
-    service.dbCutoff = 1; 
+    service.dbCutoff = 1;
     service.findTickTimes();
 
     peakGroupingService.maxFramesToDisplay = 3;
@@ -101,7 +101,7 @@ describe('PeakCaptureService', () => {
 
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([11500, 12400, 13400, 14500, 15600]);
-    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([-100, 0, 100]);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([[-100], [0], [100]]);
     expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(13000);
     expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(11000);
   });
@@ -117,7 +117,7 @@ describe('PeakCaptureService', () => {
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(5200, sampleData);
-    service.dbCutoff = 1; 
+    service.dbCutoff = 1;
     service.findTickTimes();
 
     peakGroupingService.maxFramesToDisplay = 3;
@@ -126,7 +126,7 @@ describe('PeakCaptureService', () => {
     console.log(peakGroupingService.getFramesToDisplay());
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
-    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([-100, 0, 100]);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([[-100], [0], [100]]);
     expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(2000);
     expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(0);
   });
@@ -139,7 +139,7 @@ describe('PeakCaptureService', () => {
 
     audioService.sampleRate = 10;
     audioService.sampleQueue.add(5200, sampleData);
-    service.dbCutoff = 1; 
+    service.dbCutoff = 1;
     service.findTickTimes();
 
     peakGroupingService.maxFramesToDisplay = 3;
@@ -149,7 +149,7 @@ describe('PeakCaptureService', () => {
     console.log(peakGroupingService.getFramesToDisplay());
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
-    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([0, -100, -100]);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([[0], [-100], [-100]]);
     expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(0);
     expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(0);
   });
@@ -174,7 +174,7 @@ describe('PeakCaptureService', () => {
         0, 0
       ]
     ));
-    service.dbCutoff = 1; 
+    service.dbCutoff = 1;
     service.findTickTimes();
 
     audioService.sampleQueue.add(4300, new Float32Array(
@@ -200,7 +200,7 @@ describe('PeakCaptureService', () => {
 
     expect(service).toBeTruthy();
     expect(service.tickTimes).toEqual([500, 1400, 2400, 3500, 4600]);
-    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([0, -100, -100, 0, 100]);
+    expect(peakGroupingService.getFramesToDisplay().frames).toEqual([[0], [-100], [-100], [0], [100]]);
     expect(peakGroupingService.getFramesToDisplay().startTime).toEqual(0);
     expect(peakGroupingService.getFramesToDisplay().firstFrameTime).toEqual(0);
   });

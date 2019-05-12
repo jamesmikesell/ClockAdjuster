@@ -133,10 +133,9 @@ Running Time: <span *ngIf="runningTime">{{runningTime}}</span>
 
 <br>
 <div class="content-container">
-  <div *ngIf="chartOptions">
+  <div *ngIf="lineData.length && chartOptions">
     <div style="display: block;" class="chart-container">
-      <canvas baseChart width="400" height="400" [data]="lineData" [labels]="labelData" [chartType]="'line'"
-        [options]="chartOptions"></canvas>
+      <canvas baseChart [data]="lineData" [chartType]="'scatter'" [options]="chartOptions" [colors]="chartColors"></canvas>
     </div>
 
     <mat-slider class="chart-scroller" [min]="0" [max]="1000000" (touchstart)="chartScrollerDown()"
