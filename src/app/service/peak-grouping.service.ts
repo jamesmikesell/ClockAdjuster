@@ -79,14 +79,14 @@ export class PeakGroupingService {
   }
 
 
-  private splitTickTimesIntoFrames(startingFrameIndex: number, frameCount: number): number[] {
+  private splitTickTimesIntoFrames(startingFrameIndex: number, frameCount: number): number[][] {
     if (this.peakCaptureService.tickTimes.length) {
       let frameTimeSpan = this.peakCaptureService.frameTimeSpanMs;
       let firstTickTime = this.peakCaptureService.tickTimes[0];
 
-      let frames = new Array<number>(frameCount);
+      let frames = new Array<Array<number>>(frameCount);
       for (let i = 0; i < frames.length; i++)
-        frames[i] = undefined;
+        frames[i] = [];
 
       for (let i = 0; i < this.peakCaptureService.tickTimes.length; i++) {
         const tickTime = this.peakCaptureService.tickTimes[i];
@@ -98,7 +98,7 @@ export class PeakGroupingService {
 
         if (frameIndex >= 0 && frameIndex < frameCount) {
           let frameTime = (frameIndex + startingFrameIndex) * frameTimeSpan;
-          frames[frameIndex] = tickTimeSinceFirstTick - frameTime;
+          frames[frameIndex].push(tickTimeSinceFirstTick - frameTime);
         }
       }
 
@@ -113,7 +113,7 @@ export class PeakGroupingService {
 
 
 class FramesToDisplay {
-  constructor(public frames: number[],
+  constructor(public frames: number[][],
     public startTime: number,
     public firstFrameTime: number) { }
 

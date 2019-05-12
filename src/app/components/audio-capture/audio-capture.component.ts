@@ -6,6 +6,7 @@ import { NoSleepService } from '../../service/no-sleep.service';
 import { PeakCaptureService, PeakDetectionMethod } from '../../service/peak-capture.service';
 import { TimeService } from '../../service/time.service';
 import { PeakGroupingService } from '../../service/peak-grouping.service';
+import { Color } from 'ng2-charts';
 
 @Component({
   selector: 'app-audio-capture',
@@ -13,15 +14,15 @@ import { PeakGroupingService } from '../../service/peak-grouping.service';
   styleUrls: ['./audio-capture.component.css']
 })
 export class AudioCaptureComponent implements OnInit, OnDestroy {
-
-  lineData: number[] = [];
-  labelData: string[] = [];
+  lineData: ScatterData[] = [];
   chartOptions: ChartOptions;
   runningTime: string;
   PeakDetectionMethod = PeakDetectionMethod;
   targetBph: number;
   targetDelta: string;
+  chartColors: Color[] = [];
 
+  private color: Color = { backgroundColor: "#3f51b5", borderColor: "#ffffff" };
   private periodicUpdate: Subscription;
   private _bph = 3600;
   private readonly scrollMax = 1000000;
@@ -225,7 +226,6 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
 
   reset(): void {
     this.audioCaptureService.sampleQueue.clear();
-    this.labelData = [];
     this.lineData = [];
     this.peakCaptureService.clear();
     this.runningTime = undefined;
@@ -255,11 +255,6 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
       },
       maintainAspectRatio: false,
       elements: {
-        line: {
-          tension: 0,
-          fill: false,
-          borderWidth: 0
-        },
         point: {
           radius: 2
         }
@@ -271,12 +266,16 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
         animationDuration: 0
       },
       responsiveAnimationDuration: 0,
-      showLines: false,
       scales: {
         yAxes: [{
           ticks: {
             max: chartYMax / 2,
             min: -chartYMax / 2
+          }
+        }],
+        xAxes: [{
+          ticks: {
+            stepSize: chartYMax / 1000
           }
         }]
       }
@@ -316,29 +315,34 @@ export class AudioCaptureComponent implements OnInit, OnDestroy {
       this.syncFramesWithGraph(frames.frames, frames.startTime, frames.firstFrameTime);
   }
 
-  private syncFramesWithGraph(frames: number[], windowStartTime: number, firstFrameTime: number): void {
-    // Most recent graph data doesn't equal it's counter part in frame data (likely change in BPH);
-    // clear and start over
+
+
+  private syncFramesWithGraph(frames: number[][], windowStartTime: number, firstFrameTime: number): void {
     let maxFrames = this.getMaxFramesToDisplay();
-    if (this.lineData.length !== maxFrames)
-      this.lineData.length = maxFrames;
-    if (this.labelData.length !== maxFrames)
-      this.labelData.length = maxFrames;
-
-    // We're syncing arrays as just resetting the array each time has performance implications when the graph re-renders
+    this.lineData = [];
     for (let i = 0; i < maxFrames; i++) {
+      let seconds = (Math.abs((windowStartTime - firstFrameTime + (this.getFrameTimeSpanMs() * i)) / 10) / 100);
       if (i >= frames.length) {
-        this.labelData[i] = "";
-        this.lineData[i] = undefined;
+        this.lineData.push({
+          x: seconds,
+          y: undefined
+        });
       } else {
-        let seconds = (Math.round((windowStartTime - firstFrameTime + (this.getFrameTimeSpanMs() * i)) / 10) / 100).toString();
-
-        if (this.labelData[i] !== seconds)
-          this.labelData[i] = seconds;
-        if (this.lineData[i] !== frames[i])
-          this.lineData[i] = frames[i];
+        frames[i].forEach(singleTime => this.lineData.push({
+          x: seconds,
+          y: singleTime
+        }));
       }
     }
+
+    this.chartColors.length = this.lineData.length;
+    for (let i = 0; i < this.chartColors.length; i++)
+      this.chartColors[i] = this.color;
   }
 
+}
+
+interface ScatterData {
+  x: number;
+  y: number;
 }
