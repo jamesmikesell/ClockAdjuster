@@ -98,12 +98,12 @@ export class AudioCaptureService {
   setFFTBinCount(size: number): void {
     this.fftSize = size;
 
-    if (!this.initiated)
+    if (this.analyser)
       this.analyser.fftSize = size;
   }
 
   getFrequencyData(): Uint8Array {
-    if (!this.initiated)
+    if (!this.analyser)
       return new Uint8Array();
 
     let freq = new Uint8Array(this.analyser.frequencyBinCount);
