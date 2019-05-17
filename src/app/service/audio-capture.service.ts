@@ -54,14 +54,15 @@ export class AudioCaptureService {
     if (!this.audioContext) {
       this.configureAudioContext();
 
-      let config: any = {
-        "audio": {
+      let config: ExtendedMediaStreamConstraints = {
+        audio: {
           echoCancellation: false,
           sampleRate: 44100,
-          autoGainControl: false,
+          autoGainControl: true,
           noiseSuppression: false
         }
       };
+
       return navigator.mediaDevices.getUserMedia(config).then(stream => this.configureStream(stream));
     } else {
       return Promise.resolve();
@@ -149,4 +150,13 @@ export class AudioCaptureService {
     let timeEnd = ((buf.length - 1) / (event.inputBuffer.sampleRate / 1000)) + this.getAudioTime(event);
     this.sampleQueue.add(timeEnd, buf);
   }
+}
+
+interface ExtendedMediaStreamConstraints extends MediaStreamConstraints {
+  audio: ExtendedMediaTrackConstraintSet;
+}
+
+interface ExtendedMediaTrackConstraintSet extends MediaTrackConstraintSet {
+  autoGainControl: boolean;
+  noiseSuppression: boolean;
 }
