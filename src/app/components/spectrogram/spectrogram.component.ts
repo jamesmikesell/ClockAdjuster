@@ -14,7 +14,7 @@ export class SpectrogramComponent implements OnInit, OnDestroy {
   private static _colorGraph = true;
   private static _logIntensity = false;
 
-  @ViewChild('canvas')
+  @ViewChild('canvas', { static: true })
   private canvasRef: ElementRef;
   private speed = 1;
   private canvasCtx: CanvasRenderingContext2D;
